@@ -1,5 +1,6 @@
 import { createCacheContractClient, FetchZkConfigProvider, type CacheContractClient } from "@cache/contract";
 import { loadHistory, fromHex } from "@/lib/history";
+import { loadBuildLog } from "@/lib/city-grid";
 
 let cached: { secretHex: string; client: Promise<CacheContractClient> } | null = null;
 
@@ -23,6 +24,15 @@ export function getCacheClient(secret: Uint8Array): Promise<CacheContractClient>
       mode: "local",
       secret,
       zkConfigProvider: new FetchZkConfigProvider("/managed/cache"),
+      // Same-origin, proxied to the real proof server by vite.config.ts. A
+      // literal "http://localhost:6300" only works when the browser and the
+      // proof server are the same machine; through a tunnel (a phone on a
+      // different network) "localhost" means the phone's own loopback,
+      // which has nothing listening on it. Built from window.location
+      // rather than a relative string: the proof-provider package does
+      // `new URL(baseUrl)` with no base argument, which throws on anything
+      // that isn't already absolute.
+      proofServerUrl: `${window.location.origin}/proof-server`,
     });
     const snapshot = await c.getLedgerSnapshot();
     if (!snapshot.registered) {
@@ -35,6 +45,12 @@ export function getCacheClient(secret: Uint8Array): Promise<CacheContractClient>
     for (const entry of loadHistory()) {
       await c.updateTotals(BigInt(entry.incomeCents), BigInt(entry.spendCents));
       await c.proveSavings(entry.tier, { periodId: fromHex(entry.periodIdHex) });
+    }
+    // Replay every real build() call too, in the same order, so the token
+    // balance on reload matches what the (separately, locally persisted)
+    // city grid shows as already spent.
+    for (const kind of loadBuildLog()) {
+      await c.build(kind);
     }
     return c;
   })();

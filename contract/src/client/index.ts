@@ -16,7 +16,13 @@ export { FetchZkConfigProvider } from './fetch-zk-config-provider.js';
 export type { CacheCircuitId } from './harness.js';
 
 export type CacheClientConfig =
-  | { mode: 'local'; secret: Uint8Array; zkConfigProvider?: ZKConfigProvider<CacheCircuitId> }
+  | {
+      mode: 'local';
+      secret: Uint8Array;
+      zkConfigProvider?: ZKConfigProvider<CacheCircuitId>;
+      /** Override when the browser can't reach the proof server as literal `localhost` (e.g. behind a tunnel). */
+      proofServerUrl?: string;
+    }
   | ({ mode: 'deployed' } & DeployedCacheClientConfig);
 
 /**
@@ -27,7 +33,7 @@ export type CacheClientConfig =
  */
 export const createCacheContractClient = async (config: CacheClientConfig): Promise<CacheContractClient> => {
   if (config.mode === 'local') {
-    return LocalCacheContractClient.createNew(config.secret, config.zkConfigProvider);
+    return LocalCacheContractClient.createNew(config.secret, config.zkConfigProvider, config.proofServerUrl);
   }
   return new DeployedCacheContractClient(config);
 };

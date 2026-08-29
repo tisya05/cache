@@ -48,15 +48,18 @@ export class LocalCacheContractClient implements CacheContractClient {
   private harness: CacheHarness;
   private privateState: CachePrivateState;
   private readonly zkConfigProvider: ZKConfigProvider<CacheCircuitId> | undefined;
+  private readonly proofServerUrl: string | undefined;
 
   private constructor(
     harness: CacheHarness,
     privateState: CachePrivateState,
     zkConfigProvider: ZKConfigProvider<CacheCircuitId> | undefined,
+    proofServerUrl: string | undefined,
   ) {
     this.harness = harness;
     this.privateState = privateState;
     this.zkConfigProvider = zkConfigProvider;
+    this.proofServerUrl = proofServerUrl;
   }
 
   /**
@@ -71,17 +74,23 @@ export class LocalCacheContractClient implements CacheContractClient {
    * `NodeZkConfigProvider` in Node or a `FetchZkConfigProvider` in the
    * browser. Omit it if you only need circuit-constraint checking (which is
    * itself real: a false claim throws here exactly as it would on a prover).
+   *
+   * `proofServerUrl` defaults to `http://localhost:6300` (see harness.ts) --
+   * override it when the browser and the proof server aren't on the same
+   * host, e.g. behind a tunnel, where the browser must reach the proof
+   * server through a same-origin proxy path instead of literal `localhost`.
    */
   static async createNew(
     secret: Uint8Array,
     zkConfigProvider?: ZKConfigProvider<CacheCircuitId>,
+    proofServerUrl?: string,
   ): Promise<LocalCacheContractClient> {
     const saltSeed = randomBytes(32);
     const periodId = currentPeriodId();
     const currentSalt = deriveSalt(saltSeed, 0n);
     const privateState = createCachePrivateState({ secret, saltSeed, periodId, currentSalt });
     const harness = await CacheHarness.deployLocal(privateState);
-    return new LocalCacheContractClient(harness, harness.privateState, zkConfigProvider);
+    return new LocalCacheContractClient(harness, harness.privateState, zkConfigProvider, proofServerUrl);
   }
 
   // Local mode has no durable ledger to resume against once the process
@@ -148,6 +157,7 @@ export class LocalCacheContractClient implements CacheContractClient {
       result.proofBytes = await this.harness.proveLastCallOnProofServer(
         'proveSavings' satisfies CacheCircuitId,
         this.zkConfigProvider,
+        this.proofServerUrl,
       );
     }
     return result;

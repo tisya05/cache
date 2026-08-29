@@ -144,6 +144,7 @@ export class CacheHarness {
   async proveLastCallOnProofServer(
     circuitId: CacheCircuitId,
     zkConfigProvider: ZKConfigProvider<CacheCircuitId>,
+    proofServerUrl: string = PROOF_SERVER_URL,
   ): Promise<Uint8Array> {
     if (this.lastProofData === undefined) {
       throw new Error('no successful call to prove');
@@ -155,7 +156,7 @@ export class CacheHarness {
       this.lastProofData.privateTranscriptOutputs,
       circuitId,
     );
-    const provingProvider = httpClientProvingProvider(PROOF_SERVER_URL, zkConfigProvider);
+    const provingProvider = httpClientProvingProvider(proofServerUrl, zkConfigProvider);
     return provingProvider.prove(preimage, circuitId);
   }
 

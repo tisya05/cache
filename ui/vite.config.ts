@@ -34,5 +34,15 @@ export default defineConfig({
     // Fine for a local dev server behind a temporary tunnel; not something
     // to carry into a real deployment.
     allowedHosts: true,
+    proxy: {
+      // Lets a phone on a different network (behind the tunnel) reach the
+      // proof server, which only listens on this machine's localhost:6300.
+      // See ui/src/lib/cache-client.ts for the browser side of this.
+      "/proof-server": {
+        target: "http://localhost:6300",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/proof-server/, ""),
+      },
+    },
   },
 });
