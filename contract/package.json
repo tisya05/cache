@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/client/index.ts"
+  },
   "scripts": {
     "compile": "compact compile +0.31.1 src/cache.compact src/managed/cache",
     "compile:fast": "compact compile +0.31.1 --skip-zk src/cache.compact src/managed/cache",
@@ -14,7 +17,8 @@
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "^0.16.0",
     "@midnight-ntwrk/midnight-js-http-client-proof-provider": "^4.1.1",
-    "@midnight-ntwrk/midnight-js-types": "^4.1.1"
+    "@midnight-ntwrk/midnight-js-types": "^4.1.1",
+    "@noble/hashes": "^2.4.0"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

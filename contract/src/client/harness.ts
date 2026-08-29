@@ -8,10 +8,6 @@
  * stubs the contract's checks.
  */
 
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import {
   type CircuitResults,
   createCircuitContext,
@@ -21,46 +17,21 @@ import {
   sampleContractAddress,
 } from '@midnight-ntwrk/compact-runtime';
 import { httpClientProvingProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
-import {
-  createProverKey,
-  createVerifierKey,
-  createZKIR,
-  type ProverKey,
-  type VerifierKey,
-  ZKConfigProvider,
-  type ZKIR,
-} from '@midnight-ntwrk/midnight-js-types';
+import type { ZKConfigProvider } from '@midnight-ntwrk/midnight-js-types';
 
 import type { CachePrivateState } from '../witnesses.js';
 import { witnesses } from '../witnesses.js';
 import { Contract, type Ledger, ledger } from '../managed/cache/contract/index.js';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const MANAGED = path.resolve(HERE, '..', 'managed', 'cache');
+// No node:fs/path/url here on purpose — this file must be safe to bundle for
+// the browser. Node-only key/zkir loading lives in node-zk-config-provider.ts;
+// the browser equivalent is fetch-zk-config-provider.ts. Callers of
+// `proveLastCallOnProofServer` supply whichever one fits their environment.
 
 export type CacheCircuitId = 'register' | 'updateTotals' | 'proveSavings' | 'build';
 
-/**
- * Reads the ZK artifacts `compact compile` emitted into `managed/cache`.
- * Purely local filesystem access — no network, no indexer.
- */
-export class LocalZkConfigProvider extends ZKConfigProvider<CacheCircuitId> {
-  async getProverKey(circuitId: CacheCircuitId): Promise<ProverKey> {
-    return createProverKey(new Uint8Array(await readFile(path.join(MANAGED, 'keys', `${circuitId}.prover`))));
-  }
-
-  async getVerifierKey(circuitId: CacheCircuitId): Promise<VerifierKey> {
-    return createVerifierKey(
-      new Uint8Array(await readFile(path.join(MANAGED, 'keys', `${circuitId}.verifier`))),
-    );
-  }
-
-  async getZKIR(circuitId: CacheCircuitId): Promise<ZKIR> {
-    return createZKIR(new Uint8Array(await readFile(path.join(MANAGED, 'zkir', `${circuitId}.bzkir`))));
-  }
-}
-
-export const PROOF_SERVER_URL = process.env.PROOF_SERVER_URL ?? 'http://localhost:6300';
+export const PROOF_SERVER_URL =
+  (typeof process !== 'undefined' ? process.env?.PROOF_SERVER_URL : undefined) ?? 'http://localhost:6300';
 
 /** A single user's local view: the contract's public state plus their private state. */
 export class CacheHarness {
@@ -170,7 +141,10 @@ export class CacheHarness {
    * `httpClientProvingProvider` POSTs it to the proof server's `/prove`
    * endpoint together with the compiled prover key and ZKIR.
    */
-  async proveLastCallOnProofServer(circuitId: CacheCircuitId): Promise<Uint8Array> {
+  async proveLastCallOnProofServer(
+    circuitId: CacheCircuitId,
+    zkConfigProvider: ZKConfigProvider<CacheCircuitId>,
+  ): Promise<Uint8Array> {
     if (this.lastProofData === undefined) {
       throw new Error('no successful call to prove');
     }
@@ -181,7 +155,7 @@ export class CacheHarness {
       this.lastProofData.privateTranscriptOutputs,
       circuitId,
     );
-    const provingProvider = httpClientProvingProvider(PROOF_SERVER_URL, new LocalZkConfigProvider());
+    const provingProvider = httpClientProvingProvider(PROOF_SERVER_URL, zkConfigProvider);
     return provingProvider.prove(preimage, circuitId);
   }
 

@@ -17,7 +17,8 @@
  * mirrored `commitBalance` reproduces the value `register` actually wrote.
  */
 
-import { createHash } from 'node:crypto';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { concatBytes } from '@noble/hashes/utils.js';
 
 import {
   CompactTypeBytes,
@@ -160,11 +161,9 @@ export type CachePrivateState = {
  */
 export const deriveSalt = (seed: Uint8Array, counter: bigint): Uint8Array => {
   const counterBytes = convertFieldToBytes(32, counter, 'witnesses.ts deriveSalt counter');
-  const hash = createHash('sha256');
-  hash.update(pad32('cache:salt:'));
-  hash.update(seed);
-  hash.update(counterBytes);
-  return new Uint8Array(hash.digest());
+  // @noble/hashes rather than node:crypto: this must run identically in the
+  // browser (the PWA) and in Node (tests, IMAP ingest) — no platform split.
+  return sha256(concatBytes(pad32('cache:salt:'), seed, counterBytes));
 };
 
 /**

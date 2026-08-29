@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createCacheContractClient } from './index.js';
 import { DeployedCacheContractClient } from './deployed-client.js';
+import { NodeZkConfigProvider } from './node-zk-config-provider.js';
 
 const secretOf = (fill: number): Uint8Array => new Uint8Array(32).fill(fill);
 
@@ -64,7 +65,11 @@ describe('CacheContractClient — local mode, via the public interface only', ()
   });
 
   it('generateRealProof round-trips a genuine SNARK through the local proof server', async () => {
-    const client = await createCacheContractClient({ mode: 'local', secret: secretOf(0x14) });
+    const client = await createCacheContractClient({
+      mode: 'local',
+      secret: secretOf(0x14),
+      zkConfigProvider: new NodeZkConfigProvider(),
+    });
     await client.register();
     await client.updateTotals(200_000n, 100_000n);
 
@@ -72,6 +77,13 @@ describe('CacheContractClient — local mode, via the public interface only', ()
     expect(result.proofBytes).toBeInstanceOf(Uint8Array);
     expect(result.proofBytes!.length).toBeGreaterThan(1000);
   }, 30_000);
+
+  it('generateRealProof without a configured zkConfigProvider throws a clear config error, not a crash', async () => {
+    const client = await createCacheContractClient({ mode: 'local', secret: secretOf(0x15) });
+    await client.register();
+    await client.updateTotals(200_000n, 100_000n);
+    await expect(client.proveSavings(4, { generateRealProof: true })).rejects.toThrow('zkConfigProvider');
+  });
 });
 
 describe('CacheContractClient — deployed mode', () => {

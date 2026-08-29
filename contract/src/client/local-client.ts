@@ -8,7 +8,9 @@
  * `contract/src/test/cache.test.ts` for that lower-level, explicit version.
  */
 
-import { randomBytes, createHash } from 'node:crypto';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { randomBytes, utf8ToBytes } from '@noble/hashes/utils.js';
+import type { ZKConfigProvider } from '@midnight-ntwrk/midnight-js-types';
 
 import { CacheHarness, type CacheCircuitId } from './harness.js';
 import type {
@@ -32,10 +34,7 @@ import {
 /** `sha256("cache:period:" + "YYYY-MM")`, truncated/padded to 32 bytes like everything else here. */
 export const periodIdForMonth = (year: number, month1to12: number): Uint8Array => {
   const label = `${year}-${String(month1to12).padStart(2, '0')}`;
-  const hash = createHash('sha256');
-  hash.update('cache:period:');
-  hash.update(label);
-  return new Uint8Array(hash.digest());
+  return sha256(utf8ToBytes(`cache:period:${label}`));
 };
 
 const currentPeriodId = (): Uint8Array => {
@@ -48,10 +47,16 @@ export class LocalCacheContractClient implements CacheContractClient {
 
   private harness: CacheHarness;
   private privateState: CachePrivateState;
+  private readonly zkConfigProvider: ZKConfigProvider<CacheCircuitId> | undefined;
 
-  private constructor(harness: CacheHarness, privateState: CachePrivateState) {
+  private constructor(
+    harness: CacheHarness,
+    privateState: CachePrivateState,
+    zkConfigProvider: ZKConfigProvider<CacheCircuitId> | undefined,
+  ) {
     this.harness = harness;
     this.privateState = privateState;
+    this.zkConfigProvider = zkConfigProvider;
   }
 
   /**
@@ -60,15 +65,23 @@ export class LocalCacheContractClient implements CacheContractClient {
    * salt seed is drawn from a CSPRNG, per the production note in
    * `witnesses.ts` (unlike the test suite, which seeds deterministically for
    * reproducibility).
+   *
+   * `zkConfigProvider` is only needed if callers will pass
+   * `generateRealProof: true` to {@link proveSavings} — pass a
+   * `NodeZkConfigProvider` in Node or a `FetchZkConfigProvider` in the
+   * browser. Omit it if you only need circuit-constraint checking (which is
+   * itself real: a false claim throws here exactly as it would on a prover).
    */
-  static async createNew(secret: Uint8Array): Promise<LocalCacheContractClient> {
+  static async createNew(
+    secret: Uint8Array,
+    zkConfigProvider?: ZKConfigProvider<CacheCircuitId>,
+  ): Promise<LocalCacheContractClient> {
     const saltSeed = randomBytes(32);
     const periodId = currentPeriodId();
     const currentSalt = deriveSalt(saltSeed, 0n);
     const privateState = createCachePrivateState({ secret, saltSeed, periodId, currentSalt });
     const harness = await CacheHarness.deployLocal(privateState);
-    const client = new LocalCacheContractClient(harness, harness.privateState);
-    return client;
+    return new LocalCacheContractClient(harness, harness.privateState, zkConfigProvider);
   }
 
   // Local mode has no durable ledger to resume against once the process
@@ -126,7 +139,16 @@ export class LocalCacheContractClient implements CacheContractClient {
       totalBlocks,
     };
     if (options?.generateRealProof) {
-      result.proofBytes = await this.harness.proveLastCallOnProofServer('proveSavings' satisfies CacheCircuitId);
+      if (!this.zkConfigProvider) {
+        throw new Error(
+          'proveSavings({ generateRealProof: true }) requires a zkConfigProvider — pass one to ' +
+            'createCacheContractClient({ mode: "local", secret, zkConfigProvider }).',
+        );
+      }
+      result.proofBytes = await this.harness.proveLastCallOnProofServer(
+        'proveSavings' satisfies CacheCircuitId,
+        this.zkConfigProvider,
+      );
     }
     return result;
   }

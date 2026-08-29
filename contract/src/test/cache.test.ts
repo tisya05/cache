@@ -22,6 +22,7 @@ import {
   withTotals,
 } from '../witnesses.js';
 import { CacheHarness, PROOF_SERVER_URL, captureRejection, toHex } from '../client/harness.js';
+import { NodeZkConfigProvider } from '../client/node-zk-config-provider.js';
 
 const SENTINEL = new Uint8Array(32);
 
@@ -299,7 +300,7 @@ describe('Cache — real ZK proof generation against the local proof server', ()
     console.log('serialized preimage     :', preimageBytes, 'bytes');
 
     const started = Date.now();
-    const proof = await harness.proveLastCallOnProofServer('proveSavings');
+    const proof = await harness.proveLastCallOnProofServer('proveSavings', new NodeZkConfigProvider());
     const elapsed = ((Date.now() - started) / 1000).toFixed(1);
 
     const head = Buffer.from(proof.slice(0, 48)).toString('hex');
