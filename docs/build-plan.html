@@ -256,8 +256,11 @@ ul.plain strong{color:var(--ink);font-weight:600}
 <span class="kw">assert</span>((income - spend) * 100 &gt;= (tier * 10) * income,
        <span class="st">"savings below claimed tier"</span>);</code></pre>
   <p>One multiply, one compare, no division, no floating point. Cheap enough that proving stays fast on a phone-sized workload — and it is the kind of specific, defensible choice a judge scoring <em>Technology</em> can actually point at.</p>
-  <h3>The anti-cheat</h3>
-  <p><code>sealPeriod()</code> commits <code>persistentCommit([income, goal], salt)</code> at the <em>start</em> of the period. <code>proveSavings()</code> must open that same commitment. You cannot revise your income after seeing where you land on the leaderboard — the commitment simply will not open. A nullifier derived from <code>persistentHash([secret, periodId])</code> stops anyone claiming the same month twice or farming duplicate accounts.</p>
+  <h3>Income is a stream, not a sealed number</h3>
+  <p>An earlier draft locked <code>(income, goal)</code> at the start of the period. That was wrong for students — irregular paychecks, gig work, Venmo rent splits, tutoring cash, aid disbursements. It would force people to lie on day one. <strong>Income is now a stream of events, exactly like spending</strong>, and <code>updateTotals()</code> can be called as often as the totals change.</p>
+  <h3>The anti-cheat, stated honestly</h3>
+  <p>The claim is no longer "income was locked before you knew anything." It is <strong>"you committed your totals before you could see the leaderboard."</strong> Revising after you lose is still impossible and the cheat demo still works — but someone could inflate income on day 29 and commit that.</p>
+  <p>So a second mechanism carries the weight: <strong>a carry-forward savings balance.</strong> Claimed savings enter an on-chain committed balance that must still be there next period, or be visibly spent down. You cannot hold fake savings and real spending at once — the books stop balancing. Double-entry bookkeeping enforced by cryptography, where a lie has to be maintained forever or it collapses. A nullifier from <code>persistentHash([secret, periodId])</code> still blocks double-claims and account farming.</p>
   <div class="note">
     <span class="tag">Demo weapon</span>
     <p>Ship a <strong>Cheat Mode toggle</strong> in the demo build. Tamper with the income after sealing, hit prove, and let the contract reject it on camera. Ten seconds, no explanation needed, and it proves the cryptography is load-bearing rather than decorative.</p>
@@ -271,10 +274,11 @@ ul.plain strong{color:var(--ink);font-weight:600}
   <div class="screens">
     <div class="card"><span class="num">01</span><h3>Welcome</h3><p>Single claim, one button. No wallet, no seed phrase, no jargon.</p><ul><li>The impossibility line as the hero</li><li>"Create your identity" → generates the local secret silently</li><li>Face ID gate to unlock</li></ul></div>
     <div class="card"><span class="num">02</span><h3>Goals</h3><p>Where the user's intent gets captured — and sealed on chain.</p><ul><li>Monthly income (private, stays local)</li><li>50/30/20 preset, adjustable</li><li>Target amount + deadline → required monthly saving</li></ul><div class="hero-note">Ends by calling sealPeriod().</div></div>
-    <div class="card"><span class="num">03</span><h3>Connect data</h3><p>Three options. One works, and the other two say so honestly.</p><ul><li>Demo transaction set — the live path</li><li>Email receipts — marked Coming soon</li><li>Bank link — marked Coming soon</li></ul><div class="hero-note">Don't fake integrations. Judges notice.</div></div>
+    <div class="card"><span class="num">03</span><h3>Connect</h3><p>Automated ingest is mandatory — manual-only is not an acceptable outcome.</p><ul><li>Email via IMAP + app password — the live path</li><li>Manual quick-add</li><li>Seeded demo month as fallback</li></ul><div class="hero-note">IMAP, not OAuth. Tunnel URLs change every restart and break redirect URIs.</div></div>
     <div class="card"><span class="num">04</span><h3>City</h3><p>Home tab. The game, and the emotional payoff.</p><ul><li>Isometric city built from earned blocks</li><li>Coin balance + current streak</li><li>Progress ring for the running period</li><li>"Seal this month" call to action</li></ul></div>
     <div class="card"><span class="num">05</span><h3>Prove</h3><p>The centerpiece. Make the cryptography visible.</p><ul><li>Two columns: what stays private vs what goes public</li><li>Live proof generation with real timing</li><li>Tier revealed, coins minted, tx hash shown</li></ul><div class="hero-note">The screen the demo video is built around.</div></div>
     <div class="card"><span class="num">06</span><h3>Insights</h3><p>Private analytics. Only ever rendered from local data.</p><ul><li>Category breakdown and trend</li><li>Needs / wants / savings vs the goal</li><li>A lock badge on every panel</li></ul></div>
+    <div class="card"><span class="num">06b</span><h3>Review queue</h3><p>Venmo memos are natural language. "Steph 🍕 lol" is not rule-parseable.</p><ul><li>Tinder-style swipe: right correct, left wrong</li><li>Wrong opens a category picker</li><li>New categories must be tagged needs/wants/savings</li></ul><div class="hero-note">Confidence threshold first — only ambiguous ones queue up.</div></div>
     <div class="card"><span class="num">07</span><h3>Friends</h3><p>The leaderboard — tiers and streaks, never amounts.</p><ul><li>Ranked by tier, then streak length</li><li>Tier badges only, no dollar figures anywhere</li><li>Tap through to visit a city</li></ul></div>
     <div class="card"><span class="num">08</span><h3>Friend city</h3><p>Read-only. Proof that the social layer leaks nothing.</p><ul><li>Their city, their tier badge, their streak</li><li>Nudge button</li><li>Explicit "what you cannot see" panel</li></ul></div>
     <div class="card"><span class="num">09</span><h3>Proof log</h3><p>Cheap to build, disproportionately convincing.</p><ul><li>Every proof you've generated, with tx hashes</li><li>Links out to the block explorer</li><li>Cheat Mode toggle lives here</li></ul></div>
@@ -295,6 +299,27 @@ ul.plain strong{color:var(--ink);font-weight:600}
     </tbody>
   </table>
   <p>The city is not a metaphor bolted onto a budgeting app — it is a rendering of your proof history. Every building exists because a valid zero-knowledge proof minted it. That sentence belongs in the README.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Disclosure ledger</p>
+  <h2>Every point where data leaves the device</h2>
+  <p class="lede">This table goes in the README verbatim and stays accurate as the code changes. A privacy app that cannot enumerate its own boundaries has not earned the claim.</p>
+  <table class="tbl">
+    <thead><tr><th>Boundary</th><th>What crosses</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>Device → LLM</td><td>Memo text and amount, ambiguous transactions only</td><td>Names stripped; known merchants handled locally with zero disclosure; user sees the exact payload first</td></tr>
+      <tr><td>Device → proof server</td><td>Witness: income total, spend total, salt</td><td>Self-hosted on localhost. Midnight's normal model is a proof server you control; on-device proving is the production path</td></tr>
+      <tr><td>Device → relayer</td><td>Signed transaction, tier only</td><td>Relayer pays fees and sees no private values</td></tr>
+      <tr><td>Relayer → chain</td><td>Tier, nullifier, commitment, block count</td><td>Public by design; commitments are opaque</td></tr>
+      <tr><td>IMAP → device</td><td>Email bodies</td><td>Local only — never reaches the relayer or any server</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Never leaves the device:</strong> raw transactions, per-category totals, income figures, merchant names, email bodies, the identity secret.</p>
+  <div class="note good">
+    <span class="tag">The closure we are not building</span>
+    <p>Every Venmo or bank email is DKIM-signed by the sending domain, and <strong>ZK Email</strong> proves in zero knowledge that such an email exists containing a given amount. That would close the trust boundary entirely. Compact's stdlib exposes hashing, commitments, Merkle paths and curve operations — but <strong>no RSA, no big-integer modexp, no SHA-256</strong>, which DKIM requires. Documented as the production path, with the exact missing primitive named. Precision here reads as maturity; vagueness gets torn apart.</p>
+  </div>
 </section>
 
 <section>
