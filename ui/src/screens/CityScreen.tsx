@@ -1,5 +1,5 @@
 import { Flame } from "lucide-react";
-import { IsometricCity } from "@/components/IsometricCity";
+import { CityIllustration } from "@/components/CityIllustration";
 import { ProgressRing } from "@/components/ProgressRing";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { useAppState } from "@/state/AppStateContext";
@@ -28,8 +28,8 @@ export function CityScreen() {
         </div>
       </div>
 
-      <div className="mt-4 overflow-hidden">
-        <IsometricCity blocksPlaced={blocks} />
+      <div className="mt-4 px-5">
+        <CityIllustration blocks={blocks} />
       </div>
 
       <div className="px-5">
