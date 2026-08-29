@@ -5,6 +5,7 @@
   "workspaces": [
     "contract",
     "ui",
-    "api"
+    "api",
+    "ingest"
   ]
 }

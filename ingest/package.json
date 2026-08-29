@@ -1,0 +1,21 @@
+{
+  "name": "@cache/ingest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "imapflow": "^1.7.6",
+    "mailparser": "^3.9.17"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0",
+    "@types/mailparser": "^3.4.6",
+    "vitest": "^3.2.7"
+  }
+}
