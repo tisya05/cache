@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+.pnp.*
+.yarn/
+
+# build output
+dist/
+build/
+*.tsbuildinfo
+
+# Compact compiler output (regenerate with `compact compile`)
+**/managed/**/keys/
+**/managed/**/zkir/
+
+# SECRETS — never commit these
+.env
+.env.*
+!.env.example
+*.seed
+seed.txt
+mnemonic.txt
+wallet.json
+**/secrets/
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
+*.log
