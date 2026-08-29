@@ -1,0 +1,3 @@
+Tiles in ground/ and buildings/ are cropped from Kenney's "Isometric Tiles City"
+and "Isometric Tiles Buildings" asset packs (https://kenney.nl), CC0 1.0
+Universal (public domain). No attribution required; noted here anyway.

@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
-import commonjs from "@originjs/vite-plugin-commonjs";
+import { viteCommonjs } from "@originjs/vite-plugin-commonjs";
 
 export default defineConfig({
   plugins: [
@@ -13,7 +13,7 @@ export default defineConfig({
     tailwindcss(),
     wasm(),
     topLevelAwait(),
-    commonjs(),
+    viteCommonjs(),
     nodePolyfills({
       include: ["buffer", "process", "util", "crypto", "stream"],
     }),

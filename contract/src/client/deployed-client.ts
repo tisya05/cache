@@ -33,7 +33,9 @@ const NOT_YET_DEPLOYED =
 export class DeployedCacheContractClient implements CacheContractClient {
   readonly mode = 'deployed' as const;
 
-  constructor(private readonly config: DeployedCacheClientConfig) {}
+  // Not stored yet -- every method below throws before it would be needed.
+  // Phase C wires this up for real once a deployment exists.
+  constructor(_config: DeployedCacheClientConfig) {}
 
   async register(): Promise<void> {
     throw new Error(NOT_YET_DEPLOYED);

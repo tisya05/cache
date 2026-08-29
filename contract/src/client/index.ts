@@ -8,7 +8,10 @@ import type { CacheContractClient } from './types.js';
 export type { CacheContractClient, CacheLedgerSnapshot, ProveSavingsOptions, ProveSavingsResult } from './types.js';
 export { LocalCacheContractClient, periodIdForMonth } from './local-client.js';
 export { DeployedCacheContractClient, type DeployedCacheClientConfig } from './deployed-client.js';
-export { NodeZkConfigProvider } from './node-zk-config-provider.js';
+// NodeZkConfigProvider is deliberately NOT re-exported here: it imports
+// node:fs, and this barrel is what the browser UI imports from. Node
+// consumers (tests, tooling) import it directly from
+// './node-zk-config-provider.js' instead.
 export { FetchZkConfigProvider } from './fetch-zk-config-provider.js';
 export type { CacheCircuitId } from './harness.js';
 
