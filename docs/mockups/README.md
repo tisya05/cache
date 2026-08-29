@@ -1,6 +1,11 @@
 # Mockups — visual source of truth
 
-Save each screen here with these exact filenames.
+**Filenames are Gemini's auto-generated ones (`Gemini_Generated_Image_*.jpeg`), not
+the tidy names below.** Read every image file in this directory and identify each
+screen by its content — the mapping is obvious from the image. The table below is
+the inventory of what should be present, not a filename index.
+
+All 14 screens are present.
 
 | File | Screen |
 |---|---|

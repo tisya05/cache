@@ -35,7 +35,10 @@ import {
 import { CATEGORY_TAXONOMY, isKnownCategory, type TransactionEvent } from '../types.js';
 import { chunk } from '../util.js';
 
-export const GEMINI_MODEL = 'gemini-2.0-flash';
+// Verified against the live API on 2026-08-29 (models.list for this key) --
+// gemini-2.0-flash no longer exists. See the file-level comment: this is a
+// moving target, kept isolated to this one constant on purpose.
+export const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_ENDPOINT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /** Max transactions per Gemini call, to stay well under the free-tier rate limit. */

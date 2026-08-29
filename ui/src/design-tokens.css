@@ -1,0 +1,82 @@
+/* Cache design tokens — Tailwind v4.
+   Import Tailwind first, then this. Utilities generate from the --color-* names
+   (e.g. --color-accent -> bg-accent / text-accent / border-accent). */
+
+@theme {
+  /* Backgrounds */
+  --color-bg: #131527;
+  --color-bg-deep: #0F1020;
+
+  /* Surfaces */
+  --color-surface: #1C1C35;
+  --color-surface-elevated: #20203C;
+  --color-surface-subtle: #262543;
+  --color-surface-hover: #2E2C4B;
+
+  /* Borders */
+  --color-border: #46455C;
+  --color-border-subtle: #383756;
+
+  /* Text */
+  --color-text-primary: #F8F5F2;
+  --color-text-secondary: #B8B5C2;
+  --color-text-tertiary: #858394;
+  --color-text-on-accent: #171522;
+
+  /* Brand */
+  --color-accent: #FCC683;
+  --color-accent-light: #FFD9A6;
+  --color-accent-muted: #8D705D;
+
+  /* Feedback */
+  --color-success: #7AC36F;
+  --color-success-surface: #1B2929;
+  --color-error: #D06D69;
+  --color-error-surface: #342326;
+  --color-warning: #E3A048;
+  --color-info: #5DA1A7;
+
+  /* Tiers — badges, icons, small glows and borders ONLY. Never large fills. */
+  --color-tier-0: #777388;
+  --color-tier-1: #5DA1A7;
+  --color-tier-2: #7AC36F;
+  --color-tier-3: #E3A048;
+  --color-tier-4: #FCC683;
+
+  /* Radius */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl: 28px;
+
+  /* Type */
+  --font-sans: "Avenir Next", "SF Pro Rounded", "Nunito Sans", system-ui, sans-serif;
+}
+
+:root { color-scheme: dark; }
+
+html, body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+}
+
+/* Type scale — size / line-height / weight
+   display 36/40/800 · h1 28/34/700 · h2 22/28/700 · h3 18/24/600
+   body-lg 16/22/400 · body 15/21/400 · body-sm 13/18/400
+   label 12/16/600 · caption 11/14/500
+   tier-number 48/52/800 · coin-balance 20/24/700
+
+   Layout — screen padding 20px · card padding 16px (20px large)
+   24px between major sections · bottom nav 72px
+   padding-bottom: calc(16px + env(safe-area-inset-bottom))
+
+   Radius usage — inputs 12-14 · small cards 14 · standard cards 18
+   hero cards 24 · sheets 28 · badges pill · buttons 14 (NOT a full pill)
+
+   Shadows — keep very subtle; the dark ground carries the depth.
+   sm 0 2px 8px rgba(0,0,0,.18) · md 0 6px 20px rgba(0,0,0,.25)
+   lg 0 12px 32px rgba(0,0,0,.32)
+   For the City use illustration lighting, not CSS shadows. */
