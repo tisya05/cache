@@ -1,0 +1,292 @@
+// ============================================================================
+// Cache — a zero-knowledge savings-proof game for students
+// ============================================================================
+//
+// THREAT MODEL / PRIVACY GOAL
+//
+// Nobody — not friends, not a leaderboard, not a server operator, not a chain
+// observer — may ever learn a user's income, spend, savings, categories, or
+// merchants. Users track their real numbers locally on their phone. Only
+// opaque cryptographic fingerprints and a coarse achievement tier reach the
+// chain.
+//
+// What an on-chain observer CAN see:
+//   - A userId (an identity commitment; a pseudonym, not a name)
+//   - An opaque Bytes<32> commitment to that user's running totals
+//   - An opaque Bytes<32> commitment to that user's carry-forward savings
+//   - A per-period nullifier (unlinkable to the commitments — different domain)
+//   - The coarse tier 0..4 a user proved for the period
+//   - A running count of game "blocks" earned and spent
+//
+// What an on-chain observer CANNOT see:
+//   - Income, spend, net savings, or the carry-forward balance (all committed
+//     under a random salt, so brute-forcing the small plaintext space fails)
+//   - The user's local secret
+//   - Which building the user placed (see `build` below)
+//
+// ANTI-CHEAT / DOUBLE-ENTRY
+//
+// Claimed savings carry forward as a committed balance. Each period's proof
+// must open the *previously stored* balance commitment before writing a new
+// one, so the books chain across periods and a user cannot claim large savings
+// and then quietly zero them out. The nullifier set makes each (secret, period)
+// claimable exactly once, which also stops one secret from farming several
+// accounts within a period.
+//
+// ============================================================================
+
+pragma language_version >= 0.26;
+
+import CompactStandardLibrary;
+
+// ============================================================================
+// LEDGER STATE — the ONLY things ever visible on-chain
+// ============================================================================
+
+// userId -> commitment to the current period's (income, spend) totals.
+// A freshly registered user holds the all-zero sentinel, which no commitment
+// can ever open to, so `proveSavings` is impossible before `updateTotals`.
+export ledger commitments: Map<Bytes<32>, Bytes<32>>;
+
+// Spent per-period nullifiers. One savings claim per (local secret, period).
+export ledger nullifiers: Set<Bytes<32>>;
+
+// userId -> the highest tier proven for the most recent claimed period (0..4).
+export ledger tiers: Map<Bytes<32>, Uint<8>>;
+
+// userId -> unspent game blocks. Minted by `proveSavings`, burned by `build`.
+// This is an available balance, not a lifetime-earned total.
+export ledger blocks: Map<Bytes<32>, Uint<16>>;
+
+// userId -> commitment to the carry-forward savings balance. Committed, never
+// plain: the amount itself is hidden behind a random salt.
+export ledger savingsBalance: Map<Bytes<32>, Bytes<32>>;
+
+// ============================================================================
+// WITNESS DECLARATIONS
+// ============================================================================
+//
+// Witnesses execute off-chain on the prover's own device and read the user's
+// local private state. Their values are confidential to the contract but also
+// untrusted by it — every witness value used below is cryptographically bound
+// to something already on the ledger before it is believed.
+
+// The user's root secret. Never leaves the device; every identity and
+// nullifier in this contract is derived from it.
+witness localSecret(): Bytes<32>;
+
+// Running income total for the current period, in minor units (e.g. cents).
+witness incomeTotal(): Uint<64>;
+
+// Running spend total for the current period, in minor units.
+witness spendTotal(): Uint<64>;
+
+// Random salt binding the current period's totals commitment.
+witness currentSalt(): Bytes<32>;
+
+// Opaque identifier for the period being claimed (e.g. a hash of "2026-08").
+// Supplied privately so the chain does not learn which month a user claimed.
+witness periodId(): Bytes<32>;
+
+// The carry-forward savings amount that the CURRENTLY STORED savingsBalance
+// commitment opens to.
+witness previousBalance(): Uint<64>;
+
+// The salt that the currently stored savingsBalance commitment was made with.
+witness previousBalanceSalt(): Bytes<32>;
+
+// A fresh salt for the savingsBalance commitment being written right now.
+witness newSalt(): Bytes<32>;
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+// Highest claimable tier. Tier t asserts a savings rate of at least t * 10%:
+//   tier 0 =  0%   tier 1 = 10%   tier 2 = 20%   tier 3 = 30%   tier 4 = 40%+
+export pure circuit maxTier(): Uint<8> {
+  return 4;
+}
+
+// Number of distinct building types the city game offers, indexed 0..7.
+export pure circuit maxBuildingKind(): Uint<8> {
+  return 7;
+}
+
+// ============================================================================
+// HELPER CIRCUITS
+// ============================================================================
+//
+// DOMAIN SEPARATION: every hash and commitment below uses a distinct domain
+// prefix. Reusing one prefix across purposes would let an observer correlate,
+// for example, a nullifier with the identity that produced it, collapsing the
+// unlinkability the nullifier exists to provide.
+
+// Identity commitment. Deterministic (no salt) so the same device always
+// resolves to the same userId across periods. `persistentHash` rather than
+// `persistentCommit` for exactly that reason.
+circuit deriveUserId(sk: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "cache:pk:"), sk]);
+}
+
+// Per-period nullifier. Deterministic in (secret, period) so the same period
+// cannot be claimed twice, and separated by domain from `cache:pk:` so it
+// cannot be linked back to the userId.
+circuit deriveNullifier(sk: Bytes<32>, period: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "cache:nul:"), sk, period]);
+}
+
+// Commitment to a period's raw totals. Salted, so an observer cannot brute
+// force the (income, spend) space — the plaintext domain is small enough that
+// an unsalted hash would be trivially invertible.
+circuit commitTotals(income: Uint<64>, spend: Uint<64>, salt: Bytes<32>): Bytes<32> {
+  const incomeBytes = (income as Field) as Bytes<32>;
+  const spendBytes = (spend as Field) as Bytes<32>;
+  return persistentCommit<Vector<3, Bytes<32>>>(
+           [pad(32, "cache:commit:"), incomeBytes, spendBytes],
+           salt
+           );
+}
+
+// Commitment to a carry-forward savings balance. Salted for the same reason,
+// and domain-separated from `cache:commit:` so a balance commitment can never
+// be replayed as a totals commitment.
+circuit commitBalance(amount: Uint<64>, salt: Bytes<32>): Bytes<32> {
+  const amountBytes = (amount as Field) as Bytes<32>;
+  return persistentCommit<Vector<2, Bytes<32>>>([pad(32, "cache:bal:"), amountBytes], salt);
+}
+
+// ============================================================================
+// CIRCUITS
+// ============================================================================
+
+// One-time identity bootstrap.
+//
+// Derives the userId from the local secret and seeds the four per-user ledger
+// entries. The savings balance is seeded as a real commitment to zero (not the
+// all-zero sentinel) so that `proveSavings` can open it uniformly from the very
+// first period without a special case.
+export circuit register(): [] {
+  // disclose(): the userId is a ledger map key and therefore public by
+  // construction. It is a hash of the secret under a dedicated domain, so it
+  // reveals the pseudonym and nothing else. The secret itself never crosses
+  // this boundary.
+  const userId = disclose(deriveUserId(localSecret()));
+
+  assert(!commitments.member(userId), "user already registered");
+
+  // All-zero sentinel: no totals committed yet for this period.
+  commitments.insert(userId, default<Bytes<32>>);
+  tiers.insert(userId, 0);
+  blocks.insert(userId, 0);
+  // Commitment to a zero starting balance. No disclose(): persistentCommit
+  // cryptographically hides its input and clears witness taint.
+  savingsBalance.insert(userId, commitBalance(0, newSalt()));
+}
+
+// Refresh the fingerprint of this period's running totals.
+//
+// Called as often as the user's local ledger changes — no nullifier is touched
+// here, so there is no per-period limit on calls. The commitment the client
+// computed locally is passed in, but it is only accepted after the circuit
+// recomputes it from the private (income, spend, salt) witnesses and finds it
+// identical. That binding is what makes the stored fingerprint provably a
+// commitment to real totals rather than an arbitrary 32 bytes.
+export circuit updateTotals(commitment: Bytes<32>): [] {
+  const userId = disclose(deriveUserId(localSecret()));
+  assert(commitments.member(userId), "user not registered");
+
+  const recomputed = commitTotals(incomeTotal(), spendTotal(), currentSalt());
+  assert(commitment == recomputed, "commitment does not match local totals");
+
+  // The recomputed value is written rather than the argument: they are equal
+  // by the assert above, and the recomputed one is provably well-formed.
+  commitments.insert(userId, recomputed);
+}
+
+// Prove a savings tier for one period and mint the blocks it earns.
+//
+// This is the core circuit. It proves, without revealing a single dollar
+// amount, that: the claimed totals are the ones already committed on-chain;
+// those totals clear the claimed savings rate; this period has not been
+// claimed before; and the carry-forward balance chains correctly from the
+// previously committed one.
+export circuit proveSavings(tier: Uint<8>): [] {
+  const sk = localSecret();
+  const userId = disclose(deriveUserId(sk));
+  assert(commitments.member(userId), "user not registered");
+
+  const income = incomeTotal();
+  const spend = spendTotal();
+
+  // --- 1. The claimed totals must be the ones already committed ------------
+  // Opening the stored commitment proves the user is not inventing favourable
+  // numbers at claim time. Neither operand's plaintext leaves the proof.
+  assert(commitTotals(income, spend, currentSalt()) == commitments.lookup(userId),
+         "totals do not match committed fingerprint"
+         );
+
+  // --- 2. The savings-rate claim, multiplication only ----------------------
+  // Tier t claims a savings rate of at least t * 10%. Compact has no division,
+  // so the rate check is cross-multiplied:
+  //     (income - spend) / income  >=  (tier * 10) / 100
+  // becomes
+  //     (income - spend) * 100     >=  (tier * 10) * income
+  // Note this holds trivially for tier 0, and for income == 0 it holds only at
+  // tier 0 — a user with no income cannot claim a savings rate.
+  assert(tier <= maxTier(), "tier out of range");
+  assert(spend <= income, "spend exceeds income");
+  const net = (income - spend) as Uint<64>;
+  assert(net * 100 >= (tier * 10) * income, "savings below claimed tier");
+
+  // --- 3. One claim per (secret, period) -----------------------------------
+  // disclose(): the nullifier must be publicly recorded to be useful. Its
+  // dedicated `cache:nul:` domain keeps it uncorrelatable with the userId, and
+  // the private periodId keeps the claimed month off-chain.
+  const nul = disclose(deriveNullifier(sk, periodId()));
+  assert(!nullifiers.member(nul), "period already claimed");
+  nullifiers.insert(nul);
+
+  // --- 4. Record the proven tier -------------------------------------------
+  // disclose(): the tier is the one fact this circuit is designed to reveal.
+  tiers.insert(userId, disclose(tier));
+
+  // --- 5. Mint blocks -------------------------------------------------------
+  // Earned blocks = tier + 1, so any user who completes a period and proves a
+  // rate gets at least one building, and higher tiers build faster.
+  const earned = (tier + 1) as Uint<16>;
+  const heldBlocks = blocks.lookup(userId);
+  assert(heldBlocks + earned <= 65535, "block balance overflow");
+  blocks.insert(userId, disclose((heldBlocks + earned) as Uint<16>));
+
+  // --- 6. Carry the savings balance forward --------------------------------
+  // The circuit cannot do arithmetic on an opaque Bytes<32>, so the witness
+  // opens the stored commitment locally and the circuit verifies that opening
+  // against the ledger before trusting the amount. The new balance is then
+  // recommitted under a fresh salt. This is what makes the books balance
+  // across periods: the previous commitment must open, so a user cannot claim
+  // savings in one period and silently discard them in the next.
+  const prevBalance = previousBalance();
+  assert(commitBalance(prevBalance, previousBalanceSalt()) == savingsBalance.lookup(userId),
+         "previous savings balance does not open"
+         );
+  const newBalance = (prevBalance + net) as Uint<64>;
+  savingsBalance.insert(userId, commitBalance(newBalance, newSalt()));
+}
+
+// Spend one earned block on a city building.
+//
+// `kind` selects the building type from the game's catalog (0..7). It is bound
+// into the proof but is deliberately NOT written to the ledger: the ledger
+// state is fixed at the five fields above, and the city layout is client-side
+// state the user renders locally. On-chain, a build is visible only as the
+// block balance decreasing by one.
+export circuit build(kind: Uint<8>): [] {
+  const userId = disclose(deriveUserId(localSecret()));
+  assert(blocks.member(userId), "user not registered");
+  assert(kind <= maxBuildingKind(), "unknown building kind");
+
+  const heldBlocks = blocks.lookup(userId);
+  assert(heldBlocks >= 1, "no unspent blocks");
+  blocks.insert(userId, (heldBlocks - 1) as Uint<16>);
+}
