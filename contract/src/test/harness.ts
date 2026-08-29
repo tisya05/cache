@@ -13,10 +13,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  type CallProofData,
   type CircuitResults,
   createCircuitContext,
   createConstructorContext,
+  type ProofData,
   proofDataIntoSerializedPreimage,
   sampleContractAddress,
 } from '@midnight-ntwrk/compact-runtime';
@@ -71,7 +71,14 @@ export class CacheHarness {
   privateState: CachePrivateState;
 
   /** Proof data produced by the most recent successful call. */
-  lastProofData: CallProofData | undefined;
+  lastProofData: ProofData | undefined;
+
+  /**
+   * Which circuit produced {@link lastProofData}. `ProofData` itself carries
+   * no circuit identity in compact-runtime 0.16.0 (unlike 0.19.0's
+   * `CallProofData`), so the harness tracks it alongside instead.
+   */
+  lastProofCircuitId: CacheCircuitId | undefined;
 
   readonly contractAddress: string;
   readonly coinPublicKey: string;
@@ -95,6 +102,9 @@ export class CacheHarness {
   /** Runs the contract's constructor to obtain the genesis ledger state. */
   static async deployLocal(privateState: CachePrivateState): Promise<CacheHarness> {
     const contract = new Contract<CachePrivateState>(witnesses);
+    // Synchronous in compact-runtime 0.16.0 (the version Preprod's ledger
+    // 8.1.0 / toolchain 0.31.1 actually support); `await` on a non-promise is
+    // a harmless no-op, kept so this method's own signature can stay async.
     const initial = await contract.initialState(createConstructorContext(privateState, '0'.repeat(64)));
     return new CacheHarness(
       contract,
@@ -109,9 +119,10 @@ export class CacheHarness {
     return ledger(this.contractState);
   }
 
-  private context(circuitId: CacheCircuitId) {
+  private context() {
+    // No circuitId argument in 0.16.0 — the circuit being run is implicit in
+    // which `contract.circuits.X()` method is called, not in the context.
     return createCircuitContext<CachePrivateState>(
-      circuitId,
       this.contractAddress,
       this.coinPublicKey,
       this.contractState,
@@ -124,26 +135,30 @@ export class CacheHarness {
    * advance together. Never reached when a circuit `assert` throws, which is
    * exactly the on-chain semantics — a rejected call changes nothing.
    */
-  private commit(results: CircuitResults<CachePrivateState, unknown>): void {
-    this.contractState = results.context.callContext.currentQueryContext.state;
-    this.privateState = results.context.callContext.currentPrivateState as CachePrivateState;
-    this.lastProofData = results.context.callProofDataTrace.at(-1);
+  private commit(circuitId: CacheCircuitId, results: CircuitResults<CachePrivateState, unknown>): void {
+    this.contractState = results.context.currentQueryContext.state;
+    this.privateState = results.context.currentPrivateState as CachePrivateState;
+    this.lastProofData = results.proofData;
+    this.lastProofCircuitId = circuitId;
   }
 
+  // Circuit calls are synchronous in compact-runtime 0.16.0; these methods
+  // stay `async` (awaiting a non-promise is a harmless no-op) so callers
+  // don't need to change if the runtime ever moves back to an async API.
   async register(): Promise<void> {
-    this.commit(await this.contract.circuits.register(this.context('register')));
+    this.commit('register', await this.contract.circuits.register(this.context()));
   }
 
   async updateTotals(commitment: Uint8Array): Promise<void> {
-    this.commit(await this.contract.circuits.updateTotals(this.context('updateTotals'), commitment));
+    this.commit('updateTotals', await this.contract.circuits.updateTotals(this.context(), commitment));
   }
 
   async proveSavings(tier: bigint): Promise<void> {
-    this.commit(await this.contract.circuits.proveSavings(this.context('proveSavings'), tier));
+    this.commit('proveSavings', await this.contract.circuits.proveSavings(this.context(), tier));
   }
 
   async build(kind: bigint): Promise<void> {
-    this.commit(await this.contract.circuits.build(this.context('build'), kind));
+    this.commit('build', await this.contract.circuits.build(this.context(), kind));
   }
 
   /**

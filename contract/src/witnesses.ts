@@ -12,7 +12,7 @@
  * to `updateTotals`, and needs `commitBalance` to keep its local carry-forward
  * bookkeeping in step with the ledger. The mirrors are built from the same
  * `@midnight-ntwrk/compact-runtime` primitives the generated circuit code uses
- * (`persistentHash`, `persistentCommit`, `convertBigintToBytes`) so they cannot
+ * (`persistentHash`, `persistentCommit`, `convertFieldToBytes`) so they cannot
  * silently drift from the circuit — see `cache.test.ts`, which asserts the
  * mirrored `commitBalance` reproduces the value `register` actually wrote.
  */
@@ -22,7 +22,7 @@ import { createHash } from 'node:crypto';
 import {
   CompactTypeBytes,
   CompactTypeVector,
-  convertBigintToBytes,
+  convertFieldToBytes,
   persistentCommit,
   persistentHash,
   type WitnessContext,
@@ -80,8 +80,8 @@ export const commitTotals = (income: bigint, spend: bigint, salt: Uint8Array): U
     VECTOR_3_BYTES_32,
     [
       DOMAIN_TOTALS,
-      convertBigintToBytes(32, income, 'witnesses.ts commitTotals income'),
-      convertBigintToBytes(32, spend, 'witnesses.ts commitTotals spend'),
+      convertFieldToBytes(32, income, 'witnesses.ts commitTotals income'),
+      convertFieldToBytes(32, spend, 'witnesses.ts commitTotals spend'),
     ],
     salt,
   );
@@ -90,7 +90,7 @@ export const commitTotals = (income: bigint, spend: bigint, salt: Uint8Array): U
 export const commitBalance = (amount: bigint, salt: Uint8Array): Uint8Array =>
   persistentCommit(
     VECTOR_2_BYTES_32,
-    [DOMAIN_BALANCE, convertBigintToBytes(32, amount, 'witnesses.ts commitBalance amount')],
+    [DOMAIN_BALANCE, convertFieldToBytes(32, amount, 'witnesses.ts commitBalance amount')],
     salt,
   );
 
@@ -159,7 +159,7 @@ export type CachePrivateState = {
  * production note on {@link CachePrivateState.saltSeed}.
  */
 export const deriveSalt = (seed: Uint8Array, counter: bigint): Uint8Array => {
-  const counterBytes = convertBigintToBytes(32, counter, 'witnesses.ts deriveSalt counter');
+  const counterBytes = convertFieldToBytes(32, counter, 'witnesses.ts deriveSalt counter');
   const hash = createHash('sha256');
   hash.update(pad32('cache:salt:'));
   hash.update(seed);

@@ -319,7 +319,7 @@ describe('Cache — real ZK proof generation against the local proof server', ()
 
     // Proof data standing before the doomed call: the last thing that succeeded.
     const before = harness.lastProofData;
-    expect(before?.circuitId).toBe('updateTotals');
+    expect(harness.lastProofCircuitId).toBe('updateTotals');
 
     const message = await captureRejection('wrong-tier proveSavings', () => harness.proveSavings(4n));
     console.log('\n[unprovable] wrong-tier call REJECTED with:', message);
@@ -330,8 +330,8 @@ describe('Cache — real ZK proof generation against the local proof server', ()
     // own. The newest proof data available is still the earlier updateTotals
     // call — there is simply no proveSavings preimage in existence to hand to a
     // prover, which is why a false tier claim can never become a valid proof.
-    console.log('[unprovable] newest proof data still from circuit:', harness.lastProofData?.circuitId);
+    console.log('[unprovable] newest proof data still from circuit:', harness.lastProofCircuitId);
     expect(harness.lastProofData).toBe(before);
-    expect(harness.lastProofData?.circuitId).toBe('updateTotals');
+    expect(harness.lastProofCircuitId).toBe('updateTotals');
   });
 });

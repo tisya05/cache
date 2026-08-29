@@ -1,5 +1,5 @@
 import * as __compactRuntime from '@midnight-ntwrk/compact-runtime';
-__compactRuntime.checkRuntimeVersion('0.19.0');
+__compactRuntime.checkRuntimeVersion('0.16.0');
 
 const _descriptor_0 = new __compactRuntime.CompactTypeBytes(32);
 
@@ -51,8 +51,6 @@ class _ContractAddress_0 {
 
 const _descriptor_9 = new _ContractAddress_0();
 
-const _descriptor_10 = new __compactRuntime.CompactTypeUnsignedInteger(4294967295n, 4);
-
 export class Contract {
   witnesses;
   constructor(...args_0) {
@@ -89,57 +87,56 @@ export class Contract {
     }
     this.witnesses = witnesses_0;
     this.circuits = {
-      async maxTier(context, ...args_1) {
+      maxTier(context, ...args_1) {
         return { result: pureCircuits.maxTier(...args_1), context };
       },
-      async maxBuildingKind(context, ...args_1) {
+      maxBuildingKind(context, ...args_1) {
         return { result: pureCircuits.maxBuildingKind(...args_1), context };
       },
-      register: async (...args_1) => {
+      register: (...args_1) => {
         if (args_1.length !== 1) {
           throw new __compactRuntime.CompactError(`register: expected 1 argument (as invoked from Typescript), received ${args_1.length}`);
         }
         const contextOrig_0 = args_1[0];
-        if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.callContext.currentQueryContext != undefined)) {
+        if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('register',
                                      'argument 1 (as invoked from Typescript)',
-                                     'cache.compact line 169 char 1',
+                                     'cache.compact line 174 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
-        const context = __compactRuntime.copyCircuitContext(contextOrig_0);
+        const context = { ...contextOrig_0, gasCost: __compactRuntime.emptyRunningCost() };
         const partialProofData = {
           input: { value: [], alignment: [] },
           output: undefined,
           publicTranscript: [],
           privateTranscriptOutputs: []
         };
-        const result_0 = await this._register_0(context, partialProofData);
+        const result_0 = this._register_0(context, partialProofData);
         partialProofData.output = { value: [], alignment: [] };
-        __compactRuntime.finalizeCallProofData(context, partialProofData);
-        return { result: result_0, context: context, gasCost: context.callContext.currentGasCost };
+        return { result: result_0, context: context, proofData: partialProofData, gasCost: context.gasCost };
       },
-      updateTotals: async (...args_1) => {
+      updateTotals: (...args_1) => {
         if (args_1.length !== 2) {
           throw new __compactRuntime.CompactError(`updateTotals: expected 2 arguments (as invoked from Typescript), received ${args_1.length}`);
         }
         const contextOrig_0 = args_1[0];
         const commitment_0 = args_1[1];
-        if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.callContext.currentQueryContext != undefined)) {
+        if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('updateTotals',
                                      'argument 1 (as invoked from Typescript)',
-                                     'cache.compact line 195 char 1',
+                                     'cache.compact line 200 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(commitment_0.buffer instanceof ArrayBuffer && commitment_0.BYTES_PER_ELEMENT === 1 && commitment_0.length === 32)) {
           __compactRuntime.typeError('updateTotals',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'cache.compact line 195 char 1',
+                                     'cache.compact line 200 char 1',
                                      'Bytes<32>',
                                      commitment_0)
         }
-        const context = __compactRuntime.copyCircuitContext(contextOrig_0);
+        const context = { ...contextOrig_0, gasCost: __compactRuntime.emptyRunningCost() };
         const partialProofData = {
           input: {
             value: _descriptor_0.toValue(commitment_0),
@@ -149,34 +146,33 @@ export class Contract {
           publicTranscript: [],
           privateTranscriptOutputs: []
         };
-        const result_0 = await this._updateTotals_0(context,
-                                                    partialProofData,
-                                                    commitment_0);
+        const result_0 = this._updateTotals_0(context,
+                                              partialProofData,
+                                              commitment_0);
         partialProofData.output = { value: [], alignment: [] };
-        __compactRuntime.finalizeCallProofData(context, partialProofData);
-        return { result: result_0, context: context, gasCost: context.callContext.currentGasCost };
+        return { result: result_0, context: context, proofData: partialProofData, gasCost: context.gasCost };
       },
-      proveSavings: async (...args_1) => {
+      proveSavings: (...args_1) => {
         if (args_1.length !== 2) {
           throw new __compactRuntime.CompactError(`proveSavings: expected 2 arguments (as invoked from Typescript), received ${args_1.length}`);
         }
         const contextOrig_0 = args_1[0];
         const tier_0 = args_1[1];
-        if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.callContext.currentQueryContext != undefined)) {
+        if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('proveSavings',
                                      'argument 1 (as invoked from Typescript)',
-                                     'cache.compact line 214 char 1',
+                                     'cache.compact line 219 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(tier_0) === 'bigint' && tier_0 >= 0n && tier_0 <= 255n)) {
           __compactRuntime.typeError('proveSavings',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'cache.compact line 214 char 1',
+                                     'cache.compact line 219 char 1',
                                      'Uint<0..256>',
                                      tier_0)
         }
-        const context = __compactRuntime.copyCircuitContext(contextOrig_0);
+        const context = { ...contextOrig_0, gasCost: __compactRuntime.emptyRunningCost() };
         const partialProofData = {
           input: {
             value: _descriptor_2.toValue(tier_0),
@@ -186,34 +182,31 @@ export class Contract {
           publicTranscript: [],
           privateTranscriptOutputs: []
         };
-        const result_0 = await this._proveSavings_0(context,
-                                                    partialProofData,
-                                                    tier_0);
+        const result_0 = this._proveSavings_0(context, partialProofData, tier_0);
         partialProofData.output = { value: [], alignment: [] };
-        __compactRuntime.finalizeCallProofData(context, partialProofData);
-        return { result: result_0, context: context, gasCost: context.callContext.currentGasCost };
+        return { result: result_0, context: context, proofData: partialProofData, gasCost: context.gasCost };
       },
-      build: async (...args_1) => {
+      build: (...args_1) => {
         if (args_1.length !== 2) {
           throw new __compactRuntime.CompactError(`build: expected 2 arguments (as invoked from Typescript), received ${args_1.length}`);
         }
         const contextOrig_0 = args_1[0];
         const kind_0 = args_1[1];
-        if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.callContext.currentQueryContext != undefined)) {
+        if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('build',
                                      'argument 1 (as invoked from Typescript)',
-                                     'cache.compact line 284 char 1',
+                                     'cache.compact line 289 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(kind_0) === 'bigint' && kind_0 >= 0n && kind_0 <= 255n)) {
           __compactRuntime.typeError('build',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'cache.compact line 284 char 1',
+                                     'cache.compact line 289 char 1',
                                      'Uint<0..256>',
                                      kind_0)
         }
-        const context = __compactRuntime.copyCircuitContext(contextOrig_0);
+        const context = { ...contextOrig_0, gasCost: __compactRuntime.emptyRunningCost() };
         const partialProofData = {
           input: {
             value: _descriptor_2.toValue(kind_0),
@@ -223,10 +216,9 @@ export class Contract {
           publicTranscript: [],
           privateTranscriptOutputs: []
         };
-        const result_0 = await this._build_0(context, partialProofData, kind_0);
+        const result_0 = this._build_0(context, partialProofData, kind_0);
         partialProofData.output = { value: [], alignment: [] };
-        __compactRuntime.finalizeCallProofData(context, partialProofData);
-        return { result: result_0, context: context, gasCost: context.callContext.currentGasCost };
+        return { result: result_0, context: context, proofData: partialProofData, gasCost: context.gasCost };
       }
     };
     this.impureCircuits = {
@@ -242,7 +234,7 @@ export class Contract {
       build: this.circuits.build
     };
   }
-  async initialState(...args_0) {
+  initialState(...args_0) {
     if (args_0.length !== 1) {
       throw new __compactRuntime.CompactError(`Contract state constructor: expected 1 argument (as invoked from Typescript), received ${args_0.length}`);
     }
@@ -271,7 +263,7 @@ export class Contract {
     state_0.setOperation('updateTotals', new __compactRuntime.ContractOperation());
     state_0.setOperation('proveSavings', new __compactRuntime.ContractOperation());
     state_0.setOperation('build', new __compactRuntime.ContractOperation());
-    const context = __compactRuntime.createCircuitContext('constructor', __compactRuntime.dummyContractAddress(), constructorContext_0.initialZswapLocalState.coinPublicKey, state_0.data, constructorContext_0.initialPrivateState);
+    const context = __compactRuntime.createCircuitContext(__compactRuntime.dummyContractAddress(), constructorContext_0.initialZswapLocalState.coinPublicKey, state_0.data, constructorContext_0.initialPrivateState);
     const partialProofData = {
       input: { value: [], alignment: [] },
       output: undefined,
@@ -333,11 +325,11 @@ export class Contract {
                                                           new __compactRuntime.StateMap()
                                                         ).encode() } },
                                        { ins: { cached: false, n: 1 } }]);
-    state_0.data = new __compactRuntime.ChargedState(context.callContext.currentQueryContext.state.state);
+    state_0.data = new __compactRuntime.ChargedState(context.currentQueryContext.state.state);
     return {
       currentContractState: state_0,
-      currentPrivateState: context.callContext.currentPrivateState,
-      currentZswapLocalState: context.callContext.currentZswapLocalState
+      currentPrivateState: context.currentPrivateState,
+      currentZswapLocalState: context.currentZswapLocalState
     }
   }
   _persistentHash_0(value_0) {
@@ -361,13 +353,13 @@ export class Contract {
     return result_0;
   }
   _localSecret_0(context, partialProofData) {
-    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.callContext.currentQueryContext.state), context.callContext.currentPrivateState, context.callContext.currentQueryContext.address);
+    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.currentQueryContext.state), context.currentPrivateState, context.currentQueryContext.address);
     const [nextPrivateState_0, result_0] = this.witnesses.localSecret(witnessContext_0);
-    context.callContext.currentPrivateState = nextPrivateState_0;
+    context.currentPrivateState = nextPrivateState_0;
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('localSecret',
                                  'return value',
-                                 'cache.compact line 76 char 1',
+                                 'cache.compact line 81 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -378,13 +370,13 @@ export class Contract {
     return result_0;
   }
   _incomeTotal_0(context, partialProofData) {
-    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.callContext.currentQueryContext.state), context.callContext.currentPrivateState, context.callContext.currentQueryContext.address);
+    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.currentQueryContext.state), context.currentPrivateState, context.currentQueryContext.address);
     const [nextPrivateState_0, result_0] = this.witnesses.incomeTotal(witnessContext_0);
-    context.callContext.currentPrivateState = nextPrivateState_0;
+    context.currentPrivateState = nextPrivateState_0;
     if (!(typeof(result_0) === 'bigint' && result_0 >= 0n && result_0 <= 18446744073709551615n)) {
       __compactRuntime.typeError('incomeTotal',
                                  'return value',
-                                 'cache.compact line 79 char 1',
+                                 'cache.compact line 84 char 1',
                                  'Uint<0..18446744073709551616>',
                                  result_0)
     }
@@ -395,13 +387,13 @@ export class Contract {
     return result_0;
   }
   _spendTotal_0(context, partialProofData) {
-    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.callContext.currentQueryContext.state), context.callContext.currentPrivateState, context.callContext.currentQueryContext.address);
+    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.currentQueryContext.state), context.currentPrivateState, context.currentQueryContext.address);
     const [nextPrivateState_0, result_0] = this.witnesses.spendTotal(witnessContext_0);
-    context.callContext.currentPrivateState = nextPrivateState_0;
+    context.currentPrivateState = nextPrivateState_0;
     if (!(typeof(result_0) === 'bigint' && result_0 >= 0n && result_0 <= 18446744073709551615n)) {
       __compactRuntime.typeError('spendTotal',
                                  'return value',
-                                 'cache.compact line 82 char 1',
+                                 'cache.compact line 87 char 1',
                                  'Uint<0..18446744073709551616>',
                                  result_0)
     }
@@ -412,13 +404,13 @@ export class Contract {
     return result_0;
   }
   _currentSalt_0(context, partialProofData) {
-    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.callContext.currentQueryContext.state), context.callContext.currentPrivateState, context.callContext.currentQueryContext.address);
+    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.currentQueryContext.state), context.currentPrivateState, context.currentQueryContext.address);
     const [nextPrivateState_0, result_0] = this.witnesses.currentSalt(witnessContext_0);
-    context.callContext.currentPrivateState = nextPrivateState_0;
+    context.currentPrivateState = nextPrivateState_0;
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('currentSalt',
                                  'return value',
-                                 'cache.compact line 85 char 1',
+                                 'cache.compact line 90 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -429,13 +421,13 @@ export class Contract {
     return result_0;
   }
   _periodId_0(context, partialProofData) {
-    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.callContext.currentQueryContext.state), context.callContext.currentPrivateState, context.callContext.currentQueryContext.address);
+    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.currentQueryContext.state), context.currentPrivateState, context.currentQueryContext.address);
     const [nextPrivateState_0, result_0] = this.witnesses.periodId(witnessContext_0);
-    context.callContext.currentPrivateState = nextPrivateState_0;
+    context.currentPrivateState = nextPrivateState_0;
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('periodId',
                                  'return value',
-                                 'cache.compact line 89 char 1',
+                                 'cache.compact line 94 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -446,13 +438,13 @@ export class Contract {
     return result_0;
   }
   _previousBalance_0(context, partialProofData) {
-    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.callContext.currentQueryContext.state), context.callContext.currentPrivateState, context.callContext.currentQueryContext.address);
+    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.currentQueryContext.state), context.currentPrivateState, context.currentQueryContext.address);
     const [nextPrivateState_0, result_0] = this.witnesses.previousBalance(witnessContext_0);
-    context.callContext.currentPrivateState = nextPrivateState_0;
+    context.currentPrivateState = nextPrivateState_0;
     if (!(typeof(result_0) === 'bigint' && result_0 >= 0n && result_0 <= 18446744073709551615n)) {
       __compactRuntime.typeError('previousBalance',
                                  'return value',
-                                 'cache.compact line 93 char 1',
+                                 'cache.compact line 98 char 1',
                                  'Uint<0..18446744073709551616>',
                                  result_0)
     }
@@ -463,13 +455,13 @@ export class Contract {
     return result_0;
   }
   _previousBalanceSalt_0(context, partialProofData) {
-    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.callContext.currentQueryContext.state), context.callContext.currentPrivateState, context.callContext.currentQueryContext.address);
+    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.currentQueryContext.state), context.currentPrivateState, context.currentQueryContext.address);
     const [nextPrivateState_0, result_0] = this.witnesses.previousBalanceSalt(witnessContext_0);
-    context.callContext.currentPrivateState = nextPrivateState_0;
+    context.currentPrivateState = nextPrivateState_0;
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('previousBalanceSalt',
                                  'return value',
-                                 'cache.compact line 96 char 1',
+                                 'cache.compact line 101 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -480,13 +472,13 @@ export class Contract {
     return result_0;
   }
   _newSalt_0(context, partialProofData) {
-    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.callContext.currentQueryContext.state), context.callContext.currentPrivateState, context.callContext.currentQueryContext.address);
+    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.currentQueryContext.state), context.currentPrivateState, context.currentQueryContext.address);
     const [nextPrivateState_0, result_0] = this.witnesses.newSalt(witnessContext_0);
-    context.callContext.currentPrivateState = nextPrivateState_0;
+    context.currentPrivateState = nextPrivateState_0;
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('newSalt',
                                  'return value',
-                                 'cache.compact line 99 char 1',
+                                 'cache.compact line 104 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -508,26 +500,26 @@ export class Contract {
                                    period_0]);
   }
   _commitTotals_0(income_0, spend_0, salt_0) {
-    const incomeBytes_0 = __compactRuntime.convertBigintToBytes(32,
-                                                                income_0,
-                                                                'cache.compact line 143 char 23');
-    const spendBytes_0 = __compactRuntime.convertBigintToBytes(32,
-                                                               spend_0,
-                                                               'cache.compact line 144 char 22');
+    const incomeBytes_0 = __compactRuntime.convertFieldToBytes(32,
+                                                               income_0,
+                                                               'cache.compact line 148 char 23');
+    const spendBytes_0 = __compactRuntime.convertFieldToBytes(32,
+                                                              spend_0,
+                                                              'cache.compact line 149 char 22');
     return this._persistentCommit_1([new Uint8Array([99, 97, 99, 104, 101, 58, 99, 111, 109, 109, 105, 116, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
                                      incomeBytes_0,
                                      spendBytes_0],
                                     salt_0);
   }
   _commitBalance_0(amount_0, salt_0) {
-    const amountBytes_0 = __compactRuntime.convertBigintToBytes(32,
-                                                                amount_0,
-                                                                'cache.compact line 155 char 23');
+    const amountBytes_0 = __compactRuntime.convertFieldToBytes(32,
+                                                               amount_0,
+                                                               'cache.compact line 160 char 23');
     return this._persistentCommit_0([new Uint8Array([99, 97, 99, 104, 101, 58, 98, 97, 108, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
                                      amountBytes_0],
                                     salt_0);
   }
-  async _register_0(context, partialProofData) {
+  _register_0(context, partialProofData) {
     const userId_0 = this._deriveUserId_0(this._localSecret_0(context,
                                                               partialProofData));
     __compactRuntime.assert(!_descriptor_1.fromValue(__compactRuntime.queryLedgerState(context,
@@ -623,7 +615,7 @@ export class Contract {
                                        { ins: { cached: true, n: 1 } }]);
     return [];
   }
-  async _updateTotals_0(context, partialProofData, commitment_0) {
+  _updateTotals_0(context, partialProofData, commitment_0) {
     const userId_0 = this._deriveUserId_0(this._localSecret_0(context,
                                                               partialProofData));
     __compactRuntime.assert(_descriptor_1.fromValue(__compactRuntime.queryLedgerState(context,
@@ -670,7 +662,7 @@ export class Contract {
                                        { ins: { cached: true, n: 1 } }]);
     return [];
   }
-  async _proveSavings_0(context, partialProofData, tier_0) {
+  _proveSavings_0(context, partialProofData, tier_0) {
     const sk_0 = this._localSecret_0(context, partialProofData);
     const userId_0 = this._deriveUserId_0(sk_0);
     __compactRuntime.assert(_descriptor_1.fromValue(__compactRuntime.queryLedgerState(context,
@@ -800,7 +792,7 @@ export class Contract {
                             'block balance overflow');
     const tmp_0 = ((t1) => {
                     if (t1 > 65535n) {
-                      throw new __compactRuntime.CompactError('cache.compact line 260 char 34: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 65535');
+                      throw new __compactRuntime.CompactError('cache.compact line 265 char 34: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 65535');
                     }
                     return t1;
                   })(heldBlocks_0 + earned_0);
@@ -846,7 +838,7 @@ export class Contract {
                             'previous savings balance does not open');
     const newBalance_0 = ((t1) => {
                            if (t1 > 18446744073709551615n) {
-                             throw new __compactRuntime.CompactError('cache.compact line 273 char 22: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
+                             throw new __compactRuntime.CompactError('cache.compact line 278 char 22: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
                            }
                            return t1;
                          })(prevBalance_0 + net_0);
@@ -872,7 +864,7 @@ export class Contract {
                                        { ins: { cached: true, n: 1 } }]);
     return [];
   }
-  async _build_0(context, partialProofData, kind_0) {
+  _build_0(context, partialProofData, kind_0) {
     const userId_0 = this._deriveUserId_0(this._localSecret_0(context,
                                                               partialProofData));
     __compactRuntime.assert(_descriptor_1.fromValue(__compactRuntime.queryLedgerState(context,
@@ -952,7 +944,7 @@ export function ledger(stateOrChargedState) {
   const state = stateOrChargedState instanceof __compactRuntime.StateValue ? stateOrChargedState : stateOrChargedState.state;
   const chargedState = stateOrChargedState instanceof __compactRuntime.StateValue ? new __compactRuntime.ChargedState(stateOrChargedState) : stateOrChargedState;
   const context = {
-    callContext: { currentQueryContext: new __compactRuntime.QueryContext(chargedState, __compactRuntime.dummyContractAddress()), currentGasCost: __compactRuntime.emptyRunningCost() },
+    currentQueryContext: new __compactRuntime.QueryContext(chargedState, __compactRuntime.dummyContractAddress()),
     costModel: __compactRuntime.CostModel.initialCostModel()
   };
   const partialProofData = {
@@ -1011,7 +1003,7 @@ export function ledger(stateOrChargedState) {
         if (!(key_0.buffer instanceof ArrayBuffer && key_0.BYTES_PER_ELEMENT === 1 && key_0.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'cache.compact line 49 char 1',
+                                     'cache.compact line 54 char 1',
                                      'Bytes<32>',
                                      key_0)
         }
@@ -1040,7 +1032,7 @@ export function ledger(stateOrChargedState) {
         if (!(key_0.buffer instanceof ArrayBuffer && key_0.BYTES_PER_ELEMENT === 1 && key_0.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'cache.compact line 49 char 1',
+                                     'cache.compact line 54 char 1',
                                      'Bytes<32>',
                                      key_0)
         }
@@ -1120,7 +1112,7 @@ export function ledger(stateOrChargedState) {
         if (!(elem_0.buffer instanceof ArrayBuffer && elem_0.BYTES_PER_ELEMENT === 1 && elem_0.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'cache.compact line 52 char 1',
+                                     'cache.compact line 57 char 1',
                                      'Bytes<32>',
                                      elem_0)
         }
@@ -1198,7 +1190,7 @@ export function ledger(stateOrChargedState) {
         if (!(key_0.buffer instanceof ArrayBuffer && key_0.BYTES_PER_ELEMENT === 1 && key_0.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'cache.compact line 55 char 1',
+                                     'cache.compact line 60 char 1',
                                      'Bytes<32>',
                                      key_0)
         }
@@ -1227,7 +1219,7 @@ export function ledger(stateOrChargedState) {
         if (!(key_0.buffer instanceof ArrayBuffer && key_0.BYTES_PER_ELEMENT === 1 && key_0.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'cache.compact line 55 char 1',
+                                     'cache.compact line 60 char 1',
                                      'Bytes<32>',
                                      key_0)
         }
@@ -1307,7 +1299,7 @@ export function ledger(stateOrChargedState) {
         if (!(key_0.buffer instanceof ArrayBuffer && key_0.BYTES_PER_ELEMENT === 1 && key_0.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'cache.compact line 59 char 1',
+                                     'cache.compact line 64 char 1',
                                      'Bytes<32>',
                                      key_0)
         }
@@ -1336,7 +1328,7 @@ export function ledger(stateOrChargedState) {
         if (!(key_0.buffer instanceof ArrayBuffer && key_0.BYTES_PER_ELEMENT === 1 && key_0.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'cache.compact line 59 char 1',
+                                     'cache.compact line 64 char 1',
                                      'Bytes<32>',
                                      key_0)
         }
@@ -1416,7 +1408,7 @@ export function ledger(stateOrChargedState) {
         if (!(key_0.buffer instanceof ArrayBuffer && key_0.BYTES_PER_ELEMENT === 1 && key_0.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'cache.compact line 63 char 1',
+                                     'cache.compact line 68 char 1',
                                      'Bytes<32>',
                                      key_0)
         }
@@ -1445,7 +1437,7 @@ export function ledger(stateOrChargedState) {
         if (!(key_0.buffer instanceof ArrayBuffer && key_0.BYTES_PER_ELEMENT === 1 && key_0.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'cache.compact line 63 char 1',
+                                     'cache.compact line 68 char 1',
                                      'Bytes<32>',
                                      key_0)
         }
@@ -1479,7 +1471,7 @@ export function ledger(stateOrChargedState) {
   };
 }
 const _emptyContext = {
-  callContext: { currentQueryContext: new __compactRuntime.QueryContext(new __compactRuntime.ContractState().data, __compactRuntime.dummyContractAddress()), currentGasCost: __compactRuntime.emptyRunningCost() }
+  currentQueryContext: new __compactRuntime.QueryContext(new __compactRuntime.ContractState().data, __compactRuntime.dummyContractAddress())
 };
 const _dummyContract = new Contract({
   localSecret: (...args) => undefined,
@@ -1507,11 +1499,4 @@ export const pureCircuits = {
 };
 export const contractReferenceLocations =
   { tag: 'publicLedgerArray', indices: { } };
-export const expectedVk = {
-  'build': '09973addfac593118021076da64ce52e0052b46b1e2a40ee2b51800f57f0c160',
-  'proveSavings': '98d34dce5eaea5829a0452eca3ee94f9cf3c20e6f22ae18cfc0af88e880eb378',
-  'register': 'ae22c13e2308663d164138ca73970b6a5aa8c5cd751778a5bbe9137efae36434',
-  'updateTotals': '621b66d8d8f70a128776d4b0dc6c7bd669b79d18e6890c4951c547a3d75b0fa8',
-};
-
 //# sourceMappingURL=index.js.map
