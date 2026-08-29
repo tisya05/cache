@@ -45,4 +45,18 @@ export default defineConfig({
       },
     },
   },
+  // `vite preview` (serving the production build) reads this section, NOT
+  // `server` above -- duplicated rather than shared because Vite doesn't
+  // merge the two. Needed so filming can happen off the production build
+  // (no HMR websocket in the mix) while still going through the tunnel.
+  preview: {
+    allowedHosts: true,
+    proxy: {
+      "/proof-server": {
+        target: "http://localhost:6300",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/proof-server/, ""),
+      },
+    },
+  },
 });

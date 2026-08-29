@@ -95,10 +95,10 @@ export function ProfileScreen() {
           role="switch"
           aria-checked={cheat}
           onClick={toggleCheat}
-          className={`relative h-7 w-12 rounded-full transition-colors ${cheat ? "bg-accent" : "bg-surface-elevated"}`}
+          className={`relative h-6 w-11 rounded-full transition-colors ${cheat ? "bg-accent" : "bg-surface-elevated"}`}
         >
           <span
-            className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${cheat ? "translate-x-6" : "translate-x-1"}`}
+            className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${cheat ? "translate-x-5" : "translate-x-0"}`}
           />
         </button>
       </div>

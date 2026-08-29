@@ -8,9 +8,19 @@ import { useAppState } from "@/state/AppStateContext";
 import { loadGoals, loadProofReceipts } from "@/lib/app-storage";
 import { computeGoalProgress } from "@/lib/month-progress";
 import { formatMonthLabel } from "@/lib/format";
-import { BUILDING_CATALOG, loadPlacedBuildings, placeBuildingAt, appendBuildLog, type BuildingKey } from "@/lib/city-grid";
+import {
+  BUILDING_CATALOG,
+  loadPlacedBuildings,
+  placeBuildingAt,
+  moveBuildingTo,
+  removeBuildingAt,
+  nextUpgrade,
+  appendBuildLog,
+  type BuildingKey,
+  type BuildingDef,
+} from "@/lib/city-grid";
 
-const GRID_SIZE = 4;
+const GRID_SIZE = 3;
 
 export function CityScreen() {
   const { client, ledger, navigate, refreshLedger } = useAppState();
@@ -21,19 +31,33 @@ export function CityScreen() {
 
   const [shopOpen, setShopOpen] = useState(false);
   const [selected, setSelected] = useState<BuildingKey | null>(null);
+  const [movingFrom, setMovingFrom] = useState<{ col: number; row: number } | null>(null);
+  const [upgradePrompt, setUpgradePrompt] = useState<{ col: number; row: number; from: BuildingDef; to: BuildingDef } | null>(
+    null,
+  );
   const [placed, setPlaced] = useState(loadPlacedBuildings());
-  const [placing, setPlacing] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const isOccupied = (col: number, row: number) => placed.some((p) => p.col === col && p.row === row);
 
   const handlePick = (key: BuildingKey) => {
     setSelected(key);
+    setMovingFrom(null);
     setShopOpen(false);
   };
 
   const handleCellTap = async (col: number, row: number) => {
-    if (!selected || !client || placing) return;
+    if (movingFrom) {
+      if (isOccupied(col, row)) return; // can't drop onto an occupied cell
+      moveBuildingTo(movingFrom.col, movingFrom.row, col, row); // free -- no tokens change hands
+      setPlaced(loadPlacedBuildings());
+      setMovingFrom(null);
+      return;
+    }
+    if (!selected || !client || busy || isOccupied(col, row)) return;
     const def = BUILDING_CATALOG.find((b) => b.key === selected)!;
     if (blocks < def.cost) return; // shop already gates this, but re-check against live balance
-    setPlacing(true);
+    setBusy(true);
     try {
       // build(kind) always spends exactly one block per call -- there's no
       // quantity argument on the circuit -- so a cost-N building is N real,
@@ -47,9 +71,53 @@ export function CityScreen() {
       await refreshLedger();
     } finally {
       setSelected(null);
-      setPlacing(false);
+      setBusy(false);
     }
   };
+
+  const handleOccupiedTap = (col: number, row: number) => {
+    if (selected || movingFrom) return;
+    const building = placed.find((p) => p.col === col && p.row === row);
+    if (!building) return;
+    const to = nextUpgrade(building.kind);
+    if (!to) return; // already at tower, or park (not on the ladder)
+    const from = BUILDING_CATALOG.find((b) => b.key === building.kind)!;
+    setUpgradePrompt({ col, row, from, to });
+  };
+
+  const handleLongPressOccupied = (col: number, row: number) => {
+    if (selected) return;
+    setUpgradePrompt(null);
+    setMovingFrom({ col, row });
+  };
+
+  const handleConfirmUpgrade = async () => {
+    if (!upgradePrompt || !client || busy) return;
+    const diff = upgradePrompt.to.cost - upgradePrompt.from.cost;
+    if (blocks < diff) return;
+    setBusy(true);
+    try {
+      for (let i = 0; i < diff; i++) {
+        await client.build(upgradePrompt.to.onChainKind);
+        appendBuildLog(upgradePrompt.to.onChainKind);
+      }
+      placeBuildingAt(upgradePrompt.col, upgradePrompt.row, upgradePrompt.to.key);
+      setPlaced(loadPlacedBuildings());
+      await refreshLedger();
+    } finally {
+      setUpgradePrompt(null);
+      setBusy(false);
+    }
+  };
+
+  const handleRemove = () => {
+    if (!movingFrom) return;
+    removeBuildingAt(movingFrom.col, movingFrom.row); // free, but NOT refunded -- no mint-back circuit exists
+    setPlaced(loadPlacedBuildings());
+    setMovingFrom(null);
+  };
+
+  const upgradeDiff = upgradePrompt ? upgradePrompt.to.cost - upgradePrompt.from.cost : 0;
 
   return (
     <div className="min-h-screen pb-32 pt-4">
@@ -67,12 +135,36 @@ export function CityScreen() {
 
       {selected && (
         <p className="mx-5 mt-3 rounded-xl bg-accent-muted/30 px-3 py-2 text-center text-xs font-semibold text-accent-light">
-          {placing ? "Placing…" : `Tap an empty tile to place your ${selected}`}
+          {busy ? "Placing…" : `Tap an empty tile to place your ${selected}`}
         </p>
       )}
 
+      {movingFrom && (
+        <div className="mx-5 mt-3 flex items-center justify-between gap-3 rounded-xl bg-accent-muted/30 px-3 py-2">
+          <p className="text-xs font-semibold text-accent-light">
+            Tap a tile to move it. Removing won&apos;t refund tokens.
+          </p>
+          <div className="flex shrink-0 gap-3">
+            <button type="button" onClick={handleRemove} className="text-xs font-bold text-error">
+              Remove
+            </button>
+            <button type="button" onClick={() => setMovingFrom(null)} className="text-xs font-bold text-text-tertiary">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 overflow-hidden">
-        <BuildableCity gridSize={GRID_SIZE} placed={placed} selecting={!!selected} onCellTap={handleCellTap} />
+        <BuildableCity
+          gridSize={GRID_SIZE}
+          placed={placed}
+          selecting={!!selected || !!movingFrom}
+          movingFrom={movingFrom}
+          onCellTap={handleCellTap}
+          onOccupiedTap={handleOccupiedTap}
+          onLongPressOccupied={handleLongPressOccupied}
+        />
       </div>
 
       <div className="px-5">
@@ -89,7 +181,7 @@ export function CityScreen() {
           <div className="flex items-center gap-4">
             <div className="relative flex h-16 w-16 items-center justify-center">
               <ProgressRing percent={progress.percent} size={64} />
-              <span className="absolute text-lg font-extrabold">{progress.percent}%</span>
+              <span className="absolute text-sm font-extrabold">{progress.percent}%</span>
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-text-primary">On track</p>
@@ -105,6 +197,35 @@ export function CityScreen() {
       </div>
 
       {shopOpen && <BuildShopSheet balance={blocks} onPick={handlePick} onClose={() => setShopOpen(false)} />}
+
+      {upgradePrompt && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+          onClick={() => setUpgradePrompt(null)}
+        >
+          <div className="w-full max-w-xs rounded-2xl bg-surface-elevated p-5" onClick={(e) => e.stopPropagation()}>
+            <p className="mb-3 text-center font-bold">Upgrade to {upgradePrompt.to.label}?</p>
+            <div className="mb-4 flex items-center justify-center gap-4">
+              <img src={upgradePrompt.from.sprite} alt={upgradePrompt.from.label} className="h-14 w-auto object-contain opacity-40" />
+              <span className="text-text-tertiary">→</span>
+              <img src={upgradePrompt.to.sprite} alt={upgradePrompt.to.label} className="h-14 w-auto object-contain" />
+            </div>
+            <p className="mb-4 text-center text-sm text-text-secondary">
+              Costs <span className="font-bold text-accent">{upgradeDiff}</span> tokens (the price difference)
+            </p>
+            <PrimaryButton disabled={blocks < upgradeDiff || busy} onClick={handleConfirmUpgrade}>
+              {busy ? "Upgrading…" : "Upgrade"}
+            </PrimaryButton>
+            <button
+              type="button"
+              onClick={() => setUpgradePrompt(null)}
+              className="mt-2 w-full text-center text-sm text-text-tertiary"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

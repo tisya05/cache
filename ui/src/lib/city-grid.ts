@@ -48,6 +48,38 @@ export function placeBuildingAt(col: number, row: number, kind: BuildingKey): vo
   localStorage.setItem(GRID_KEY, JSON.stringify(placed));
 }
 
+/** Free -- no tokens change hands, so no build() call. */
+export function moveBuildingTo(fromCol: number, fromRow: number, toCol: number, toRow: number): void {
+  const placed = loadPlacedBuildings();
+  const building = placed.find((p) => p.col === fromCol && p.row === fromRow);
+  if (!building) return;
+  const next = placed
+    .filter((p) => !(p.col === fromCol && p.row === fromRow) && !(p.col === toCol && p.row === toRow))
+    .concat({ col: toCol, row: toRow, kind: building.kind });
+  localStorage.setItem(GRID_KEY, JSON.stringify(next));
+}
+
+/** Free to remove, but NOT refunded -- build() only ever decremented the balance; there's no mint-back circuit. */
+export function removeBuildingAt(col: number, row: number): void {
+  const placed = loadPlacedBuildings().filter((p) => !(p.col === col && p.row === row));
+  localStorage.setItem(GRID_KEY, JSON.stringify(placed));
+}
+
+/**
+ * The upgrade ladder the city grows UPWARD through, one tap at a time, in
+ * place -- deliberately not a separate set of modular base/midsection/head
+ * sprites, which would need new art and stacking logic. `park` is a
+ * decorative full-tile piece, not part of the ladder.
+ */
+export const UPGRADE_ORDER: BuildingKey[] = ["tree", "house", "shop", "apartment", "tower"];
+
+export function nextUpgrade(current: BuildingKey): BuildingDef | null {
+  const i = UPGRADE_ORDER.indexOf(current);
+  if (i === -1 || i === UPGRADE_ORDER.length - 1) return null;
+  const nextKey = UPGRADE_ORDER[i + 1]!;
+  return BUILDING_CATALOG.find((b) => b.key === nextKey)!;
+}
+
 /**
  * The in-memory local ledger forgets every build() call on reload just like
  * it forgets proveSavings calls (see history.ts) -- without replaying these

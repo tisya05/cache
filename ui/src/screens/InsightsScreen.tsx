@@ -83,7 +83,9 @@ export function InsightsScreen() {
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--color-text-tertiary)" }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip
-                contentStyle={{ background: "var(--color-surface-elevated)", border: "none", borderRadius: 8, fontSize: 12 }}
+                contentStyle={{ background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }}
+                itemStyle={{ color: "var(--color-text-primary)" }}
+                labelStyle={{ color: "var(--color-text-primary)" }}
                 formatter={(v: any) => [`$${(Number(v) / 100).toFixed(0)}`]}
               />
               <Line type="monotone" dataKey="spendCents" name="Spend" stroke={NEEDS_WANTS_SAVINGS_COLORS.wants} strokeWidth={2} dot={{ r: 3 }} />
@@ -106,7 +108,9 @@ export function InsightsScreen() {
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--color-text-tertiary)" }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip
-                contentStyle={{ background: "var(--color-surface-elevated)", border: "none", borderRadius: 8, fontSize: 12 }}
+                contentStyle={{ background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }}
+                itemStyle={{ color: "var(--color-text-primary)" }}
+                labelStyle={{ color: "var(--color-text-primary)" }}
                 formatter={(v: any) => [`${v}%`]}
               />
               <Bar dataKey="Actual" radius={[4, 4, 0, 0]}>
