@@ -35,7 +35,12 @@
 //
 // ============================================================================
 
-pragma language_version >= 0.26;
+// Pinned to the language version the Preprod-supported compiler (0.31.1) emits
+// — see contract/package.json's "compile" script, which pins +0.31.1 for
+// exactly this reason. Preprod's ledger (8.1.0) and compact-runtime (0.16.0)
+// are both older than this machine's default compiler toolchain (0.34.0,
+// which targets ledger v9 / runtime 0.19.0 and is not yet deployable there).
+pragma language_version >= 0.23;
 
 import CompactStandardLibrary;
 
