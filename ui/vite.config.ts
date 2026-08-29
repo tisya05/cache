@@ -3,7 +3,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import wasm from "vite-plugin-wasm";
-import topLevelAwait from "vite-plugin-top-level-await";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import { viteCommonjs } from "@originjs/vite-plugin-commonjs";
 
@@ -12,7 +11,14 @@ export default defineConfig({
     react(),
     tailwindcss(),
     wasm(),
-    topLevelAwait(),
+    // vite-plugin-top-level-await removed: its production-build codegen
+    // (`generateBundle`) crashes against the installed @swc/core version
+    // ("missing field `type`", an internal AST-shape mismatch, not
+    // something this project's code triggers). Our build target is
+    // already "esnext" -- top-level await is valid syntax there and every
+    // target browser (including iOS Safari, what actually matters for
+    // this PWA) supports it natively, so the transform this plugin exists
+    // to provide isn't needed here.
     viteCommonjs(),
     nodePolyfills({
       include: ["buffer", "process", "util", "crypto", "stream"],
