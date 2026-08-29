@@ -120,6 +120,13 @@ Fallback if provider assembly fights you: MeshJS `@meshsdk/midnight-react`.
 
 ## 4. The contract
 
+### 4.0 Income never comes from a form
+
+The `income` value in every commitment and proof is the **tracked total from the ingested
+event stream** (§6), never a figure the user typed. Any user-entered income estimate is a
+planning aid for the Goals screen only and must not reach a witness, a commitment, or a
+circuit. If you find yourself wiring a form field into `updateTotals`, stop — that is wrong.
+
 ### 4.1 Design history — read this, it prevents a wrong turn
 
 The **original** design sealed `(income, goal)` as one fixed number at period start. **This was
@@ -349,7 +356,7 @@ website in a phone frame.
 | # | Screen | Contents |
 |---|---|---|
 | 01 | **Welcome** | The impossibility line as hero. "Create your identity" silently generates the local secret. No wallet, no seed phrase, no jargon. Face ID gate to unlock. |
-| 02 | **Goals** | Monthly income *estimate* (editable any time — income is a stream, not a fixed value). 50/30/20 preset, adjustable. Target amount + deadline → required monthly saving. |
+| 02 | **Goals** | **Does NOT ask for income.** Income is ingested automatically (§6) — asking the user to type it is redundant and contradicts the product premise. Captures the *goal* instead: either a rate ("save 30% of whatever I earn", needs no income input at all) or an amount + deadline. 50/30/20 preset for how categories map to needs/wants/savings, adjustable. An optional, skippable "roughly what do you expect to earn?" may be offered purely to make the week-one pace projection useful before ingest has history — auto-replaced by tracked income as soon as data exists, and **never used in a proof under any circumstance**. |
 | 03 | **Connect** | Email connect (the live automated path). Manual add. Demo data. Anything not implemented is labeled **Coming soon** — do not fake integrations, judges notice. |
 | 04 | **City** | Home tab. Isometric city built from earned blocks. Coin balance, streak, period progress ring, "Seal this month" CTA. |
 | 05 | **Prove** | **Centerpiece.** Two columns: what stays private vs what goes public. Live proof generation with real timing. Tier revealed, coins minted, tx hash shown. |
