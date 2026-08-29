@@ -27,4 +27,12 @@ export default defineConfig({
     target: "esnext",
     minify: false,
   },
+  server: {
+    // cloudflared quick tunnels hand out a new random hostname every
+    // restart (see BUILD-SPEC §3) -- allowlisting one specific hostname
+    // here would break on the very next restart, so allow any host instead.
+    // Fine for a local dev server behind a temporary tunnel; not something
+    // to carry into a real deployment.
+    allowedHosts: true,
+  },
 });
