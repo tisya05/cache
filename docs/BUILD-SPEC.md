@@ -337,7 +337,7 @@ this table in the README and keep it accurate as the code changes.
 
 | # | Boundary | What crosses it | Mitigation |
 |---|---|---|---|
-| 1 | Device → LLM API | Memo text + amount, for ambiguous transactions only | Names stripped; heuristics handle known merchants with zero disclosure; user sees exact payload first; opt-in |
+| 1 | Device → Google Gemini (free tier) | Memo text (names stripped) + a bucketed amount range (e.g. "$40–50", never the exact figure), batched ~10 transactions per call, for genuinely ambiguous transactions only | Local heuristics handle known merchants (Amazon, Starbucks, Uber, DoorDash, Target, bank alerts) with zero disclosure — they never reach this boundary at all; user sees the exact batch payload and can decline before it sends; **on the free tier, Google may use inputs and outputs to improve its models, and human reviewers may read them** — mitigated by local-first heuristics, name stripping, and amount bucketing, not eliminated; production path is a paid no-training tier or fully on-device classification. Absent `GEMINI_API_KEY`, this boundary is never used — everything falls back to heuristics-only |
 | 2 | Device → proof server | Witness: income total, spend total, salt | Self-hosted on `localhost:6300`. Midnight's normal model is a proof server you control. Production path is on-device proving — Kuira already does this on Android, so it is proven viable |
 | 3 | Device → relayer | Signed transaction containing tier only | Relayer pays fees; sees no private values |
 | 4 | Relayer → chain | Tier, nullifier, commitment, block count | Public by design. Opaque commitments reveal nothing |

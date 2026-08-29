@@ -21,7 +21,7 @@ import {
   startPeriod,
   withTotals,
 } from '../witnesses.js';
-import { CacheHarness, PROOF_SERVER_URL, captureRejection, toHex } from './harness.js';
+import { CacheHarness, PROOF_SERVER_URL, captureRejection, toHex } from '../client/harness.js';
 
 const SENTINEL = new Uint8Array(32);
 
