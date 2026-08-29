@@ -437,10 +437,26 @@ Must include:
 8. Setup instructions someone can actually follow.
 
 ### Business framing
-Not "budgeting app." **A portable, provable savings credential for people with no credit
-history** — first apartments, student credit lines, phone financing — with no bank access and
-no surveillance. Greenlight charges $5.99–14.98/mo; Step, Current, and Chime pay enormous CAC
-for young users.
+
+**What Cache actually is: a money tracker and savings game for students.** Do not describe it
+as anything else. It tracks income and spending, proves savings goals in zero knowledge, and
+turns that into a city-building game with a friends leaderboard. That is the whole product.
+
+**Primary pitch — the consumer business, which is real and has named comparables.**
+Greenlight charges $5.99–14.98/month for teen money apps and has millions of subscribers;
+Step, Current, and Chime pay enormous acquisition costs for young users. A game that acquires
+them organically is worth real money. Financial habits formed before graduation persist, and
+the existing category proves people pay for this.
+
+**Secondary — one sentence of upside, clearly labeled as future direction, never as a feature:**
+because savings claims here are cryptographically proven rather than self-reported, they are
+portable verifiable claims, which over time could serve as a savings-discipline signal for
+people with thin credit files.
+
+⚠️ **Do not describe Cache as a credential product, an underwriting tool, or a savings account.**
+It is none of those. An earlier draft of this spec overreached here. If a judge asks "can I get
+a credit line with this?" the answer is no, and overclaiming in the pitch undermines the
+carefully honest trust-boundary section that is one of this project's real strengths.
 
 ---
 
