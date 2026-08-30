@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Settings, User, FileDown, FileText, X, TriangleAlert } from "lucide-react";
-import { useAppState } from "@/state/AppStateContext";
 import {
   loadProofReceipts,
   isCheatModeOn,
@@ -13,21 +12,11 @@ import {
   clearAllData,
   type Goal,
 } from "@/lib/app-storage";
-import { loadHistory } from "@/lib/history";
-import { generateHistory } from "@/lib/generate-history";
-import { syncEmailInbox } from "@/lib/email-sync";
 import { formatShortDate } from "@/lib/format";
 
 export function ProfileScreen() {
-  const { client, refreshLedger } = useAppState();
   const [cheat, setCheat] = useState(isCheatModeOn());
-  const [receipts, setReceipts] = useState(loadProofReceipts());
-  const [generating, setGenerating] = useState<{ done: number; total: number } | null>(null);
-  const [generateError, setGenerateError] = useState<string | null>(null);
-  const [resyncing, setResyncing] = useState(false);
-  const [resyncResult, setResyncResult] = useState<{ ok: true; count: number } | { ok: false; error: string } | null>(
-    null,
-  );
+  const [receipts] = useState(loadProofReceipts());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [confirmingClear, setConfirmingClear] = useState(false);
@@ -80,39 +69,6 @@ export function ProfileScreen() {
     setCheat(next);
   };
 
-  const handleGenerateHistory = async () => {
-    if (!client || generating) return;
-    setGenerating({ done: 0, total: 8 });
-    setGenerateError(null);
-    try {
-      await generateHistory(client, 8, (done, total) => setGenerating({ done, total }));
-      await refreshLedger();
-      setReceipts(loadProofReceipts());
-    } catch (err) {
-      // Each real proof takes real time (real SNARK, real proof-server round
-      // trip) -- a backgrounded tab, a locked phone screen, or a dropped
-      // connection mid-run can kill the in-flight request. Whatever already
-      // completed is already persisted (loadHistory().length below reflects
-      // it), so retrying resumes from there rather than starting over.
-      setGenerateError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setGenerating(null);
-    }
-  };
-
-  // There's no path back to ConnectScreen once onboarded (it's a one-time
-  // step), so this is the only way to pull a fresh inbox sync -- e.g. to
-  // pick up a code change to the demo income hack -- without wiping and
-  // re-onboarding.
-  const handleResyncEmail = async () => {
-    if (resyncing) return;
-    setResyncing(true);
-    setResyncResult(null);
-    const result = await syncEmailInbox();
-    setResyncResult(result.ok ? { ok: true, count: result.count } : { ok: false, error: result.error });
-    setResyncing(false);
-  };
-
   return (
     <div className="min-h-screen pb-32 pt-6">
       <div className="flex items-center justify-between px-5">
@@ -159,41 +115,6 @@ export function ProfileScreen() {
               </div>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Dev-only: backfills real history (real proofs, real SNARKs) so the
-         city isn't an empty lot before a demo recording. Not part of the
-         product surface a real user would see in a shipped app. */}
-      <div className="mx-5 mt-4 rounded-2xl border border-dashed border-border-subtle p-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Dev tools</p>
-        <button
-          type="button"
-          onClick={handleGenerateHistory}
-          disabled={!client || !!generating}
-          className="w-full rounded-[14px] border border-border bg-surface-subtle px-4 py-3 text-sm font-semibold disabled:opacity-50"
-        >
-          {generating ? `Generating history… ${generating.done}/${generating.total}` : `Generate 8 months of history (real proofs)`}
-        </button>
-        <p className="mt-2 text-xs text-text-tertiary">{loadHistory().length} historical periods persisted.</p>
-        {generateError && (
-          <p className="mt-2 text-xs text-error">
-            Stopped early: {generateError}. What already finished is saved — tap again to pick up where it left off.
-          </p>
-        )}
-
-        <button
-          type="button"
-          onClick={handleResyncEmail}
-          disabled={resyncing}
-          className="mt-3 w-full rounded-[14px] border border-border bg-surface-subtle px-4 py-3 text-sm font-semibold disabled:opacity-50"
-        >
-          {resyncing ? "Re-syncing inbox…" : "Re-sync email"}
-        </button>
-        {resyncResult && (
-          <p className={`mt-2 text-xs ${resyncResult.ok ? "text-text-tertiary" : "text-error"}`}>
-            {resyncResult.ok ? `Synced ${resyncResult.count} transactions.` : resyncResult.error}
-          </p>
         )}
       </div>
 
