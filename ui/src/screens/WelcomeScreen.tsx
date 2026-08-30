@@ -18,7 +18,7 @@ export function WelcomeScreen() {
           }}
         />
         <div className="mb-3 flex items-center gap-2">
-          <h1 className="text-6xl font-extrabold text-accent">cache</h1>
+          <h1 className="text-6xl font-extrabold text-accent">nomi</h1>
           <span className="text-3xl text-accent-light">✦</span>
         </div>
         <p className="max-w-xs text-lg text-text-secondary">

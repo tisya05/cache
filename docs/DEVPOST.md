@@ -12,7 +12,7 @@ why no competitive savings app exists at scale — not because nobody wanted one
 Zero-knowledge proofs are the third option, and Midnight is what makes it buildable.
 
 ## What it does
-Cache reads your income and spending from your email automatically. At the end of
+Nomi reads your income and spending from your email automatically. At the end of
 each period, your phone generates a zero-knowledge proof that you hit your savings
 goal — without revealing your income, your spending, your categories, or a single
 transaction. A valid proof mints in-game tokens. Tokens build a city. Friends see
@@ -55,7 +55,7 @@ proxied it into the PWA the same way the proof server already was, so "connect y
 email" in the app is calling the literal same code that reads a real inbox over IMAP.
 
 ## What we learned
-Naming your own trust boundary is worth more than overclaiming. Cache's README
+Naming your own trust boundary is worth more than overclaiming. Nomi's README
 enumerates every point where data leaves the device, and states plainly what the
 system does *not* guarantee: within a single period, unsigned self-entered data can
 be inflated. The cryptographic closure is DKIM verification inside the circuit, as

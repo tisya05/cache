@@ -1,4 +1,4 @@
-# Cache
+# Nomi
 
 **A savings game for students where nobody ever sees your money.**
 
@@ -9,7 +9,7 @@
 
 A competitive savings leaderboard is impossible to build honestly. Self-reported
 numbers mean everyone lies. Server-verified numbers mean everyone uploads their bank
-account to a startup's database. Cache is the third option: your phone generates a
+account to a startup's database. Nomi is the third option: your phone generates a
 zero-knowledge proof that you hit your goal, and the only thing that becomes public
 is a tier number.
 

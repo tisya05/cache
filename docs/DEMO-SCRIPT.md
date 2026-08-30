@@ -18,9 +18,9 @@ tracking → Value. Never cut the Proof or Cheat beats — they're the whole cas
 > A savings leaderboard shouldn't be possible — either everyone lies, or
 > everyone hands their bank account to a stranger.
 >
-> Cache is the third option."
+> Nomi is the third option."
 
-**On screen:** the Cache icon on your iPhone home screen, then tap to open.
+**On screen:** the Nomi icon on your iPhone home screen, then tap to open.
 
 ---
 

@@ -1,6 +1,6 @@
 {
-  "name": "Cache",
-  "short_name": "Cache",
+  "name": "Nomi",
+  "short_name": "Nomi",
   "description": "A savings game for students where nobody ever sees your money.",
   "start_url": "/",
   "scope": "/",
