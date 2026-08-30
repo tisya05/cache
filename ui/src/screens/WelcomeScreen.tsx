@@ -21,8 +21,9 @@ export function WelcomeScreen() {
           <h1 className="text-6xl font-extrabold text-accent">nomi</h1>
           <span className="text-3xl text-accent-light">✦</span>
         </div>
-        <p className="max-w-xs text-lg text-text-secondary">
-          A savings game for students where nobody ever sees your money.
+        <p className="max-w-xs text-lg text-text-secondary">A savings game.</p>
+        <p className="mt-1 max-w-xs text-lg text-text-secondary">
+          Your progress is public. Your money never is.
         </p>
       </div>
 
