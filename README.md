@@ -418,7 +418,7 @@ The client is written against a swappable interface, so deployment is designed t
 Requires **Docker** and **Node 20+**.
 
 ```bash
-git clone https://github.com/tisya05/cache && cd cache
+git clone https://github.com/tisya05/Nomi && cd Nomi
 npm install
 cp .env.example .env
 ```
