@@ -5,22 +5,25 @@ export function WelcomeScreen() {
   const { createIdentity, navigate } = useAppState();
 
   return (
-    <div className="flex min-h-screen flex-col justify-between overflow-hidden bg-bg-deep px-6 pb-10 pt-16">
-      <div>
+    <div className="flex min-h-screen flex-col justify-between overflow-y-auto bg-bg-deep px-6 pb-safe pt-16">
+      <div />
+
+      <div className="relative mx-auto flex flex-col items-center px-4 text-center">
+        <div
+          className="pointer-events-none absolute -inset-x-10 -inset-y-16 -z-10"
+          style={{
+            background:
+              "radial-gradient(circle, color-mix(in srgb, var(--color-accent) 28%, transparent) 0%, transparent 70%)",
+            filter: "blur(4px)",
+          }}
+        />
         <div className="mb-3 flex items-center gap-2">
-          <h1 className="text-5xl font-extrabold text-accent">cache</h1>
-          <span className="text-2xl text-accent-light">✦</span>
+          <h1 className="text-6xl font-extrabold text-accent">cache</h1>
+          <span className="text-3xl text-accent-light">✦</span>
         </div>
         <p className="max-w-xs text-lg text-text-secondary">
           A savings game for students where nobody ever sees your money.
         </p>
-      </div>
-
-      <div
-        className="relative mx-auto flex h-72 w-72 items-center justify-center rounded-full"
-        style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 70%)" }}
-      >
-        <div className="h-20 w-20 rounded-full bg-accent/20" />
       </div>
 
       <div className="space-y-3">
@@ -32,7 +35,6 @@ export function WelcomeScreen() {
         >
           Create your identity
         </PrimaryButton>
-        <p className="text-center text-xs text-text-tertiary">Unlocks with Face ID</p>
       </div>
     </div>
   );

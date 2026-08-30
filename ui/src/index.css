@@ -12,6 +12,60 @@
   padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 }
 
+/* Safe-area-aware top padding for the app shell, so the notch/status bar on
+   phones like iPhone 13 doesn't cover the header on every screen. Applied
+   once at the shell root (App.tsx) on top of each screen's own padding,
+   rather than duplicated per-screen. The extra 32px on top of the safe-area
+   inset itself is deliberate: when filming, whatever the phone is mounted
+   in/against can crop more of the top edge than just the notch, so titles
+   and header icons need clearance well past the safe area, not flush
+   against it. */
+.pt-safe {
+  padding-top: calc(env(safe-area-inset-top) + 32px);
+}
+
+/* Two of these get overlaid (SplitSlider.tsx) to make a two-handle range
+   slider out of native inputs -- real per-thumb touch dragging on iOS for
+   free, instead of hand-rolled pointer-drag code. The trick: the input
+   itself (its invisible track) ignores touches so the two overlaid copies
+   don't fight over every tap; only the visible thumb is a hit target. */
+.split-range {
+  position: absolute;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  pointer-events: none;
+  margin: 0;
+}
+.split-range::-webkit-slider-runnable-track {
+  background: transparent;
+}
+.split-range::-moz-range-track {
+  background: transparent;
+  border: none;
+}
+.split-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: white;
+  border: 3px solid var(--color-accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: grab;
+}
+.split-range::-moz-range-thumb {
+  pointer-events: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: white;
+  border: 3px solid var(--color-accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: grab;
+}
+
 /* Hide scrollbars on horizontally-scrolling strips (tab bar is fixed, this is
    for things like a future horizontal chip list) without hiding content. */
 .no-scrollbar {

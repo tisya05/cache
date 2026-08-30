@@ -1,4 +1,5 @@
 /** Small localStorage-backed persistence for onboarding/goal state. Not sensitive data. */
+import { readJSON } from "@/lib/safe-storage";
 
 export type Goal =
   | { kind: "percent"; percent: number }
@@ -22,8 +23,7 @@ const BLOCKS_PLACED_KEY = "cache:blocks-placed:v1";
 export const DEFAULT_SPLIT: Split = { needs: 50, wants: 30, savings: 20 };
 
 export function loadGoals(): GoalsConfig | null {
-  const raw = localStorage.getItem(GOALS_KEY);
-  return raw ? (JSON.parse(raw) as GoalsConfig) : null;
+  return readJSON<GoalsConfig | null>(GOALS_KEY, null);
 }
 
 export function saveGoals(config: GoalsConfig): void {
@@ -47,8 +47,7 @@ export function setCheatMode(on: boolean): void {
 }
 
 export function loadReviewedIds(): Set<string> {
-  const raw = localStorage.getItem(REVIEWED_IDS_KEY);
-  return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+  return new Set(readJSON<string[]>(REVIEWED_IDS_KEY, []));
 }
 
 export function markReviewed(id: string): void {
@@ -58,8 +57,7 @@ export function markReviewed(id: string): void {
 }
 
 export function loadCategoryOverrides(): Record<string, string> {
-  const raw = localStorage.getItem(CATEGORY_OVERRIDES_KEY);
-  return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  return readJSON<Record<string, string>>(CATEGORY_OVERRIDES_KEY, {});
 }
 
 export function setCategoryOverride(id: string, category: string): void {
@@ -70,8 +68,7 @@ export function setCategoryOverride(id: string, category: string): void {
 
 /** Which building kinds (0..7) have been placed, in placement order. Purely cosmetic/local. */
 export function loadBlocksPlaced(): number[] {
-  const raw = localStorage.getItem(BLOCKS_PLACED_KEY);
-  return raw ? (JSON.parse(raw) as number[]) : [];
+  return readJSON<number[]>(BLOCKS_PLACED_KEY, []);
 }
 
 export function addBlockPlaced(kind: number): void {
@@ -90,12 +87,32 @@ export type ProofReceipt = {
 const PROOF_RECEIPTS_KEY = "cache:proof-receipts:v1";
 
 export function loadProofReceipts(): ProofReceipt[] {
-  const raw = localStorage.getItem(PROOF_RECEIPTS_KEY);
-  return raw ? (JSON.parse(raw) as ProofReceipt[]) : [];
+  return readJSON<ProofReceipt[]>(PROOF_RECEIPTS_KEY, []);
 }
 
 export function addProofReceipt(receipt: ProofReceipt): void {
   const receipts = loadProofReceipts();
   receipts.unshift(receipt);
   localStorage.setItem(PROOF_RECEIPTS_KEY, JSON.stringify(receipts));
+}
+
+const DISPLAY_NAME_KEY = "cache:display-name:v1";
+
+export function loadDisplayName(): string {
+  return localStorage.getItem(DISPLAY_NAME_KEY) || "You";
+}
+
+export function saveDisplayName(name: string): void {
+  localStorage.setItem(DISPLAY_NAME_KEY, name);
+}
+
+/**
+ * Wipes every piece of local state -- identity secret included, since every
+ * key this app writes shares the "cache:" prefix. There's no server-side
+ * account to delete anything from; this IS the account.
+ */
+export function clearAllData(): void {
+  for (const key of Object.keys(localStorage)) {
+    if (key.startsWith("cache:")) localStorage.removeItem(key);
+  }
 }

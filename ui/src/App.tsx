@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { AppStateProvider, useAppState } from "@/state/AppStateContext";
 import { BottomNav } from "@/components/BottomNav";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { loadNeedsReviewIds } from "@/lib/transactions";
 import { loadReviewedIds } from "@/lib/app-storage";
 import { CityScreen } from "@/screens/CityScreen";
@@ -60,10 +61,12 @@ function Shell() {
 
 export function App() {
   return (
-    <AppStateProvider>
-      <div className="mx-auto min-h-screen max-w-md bg-bg text-text-primary">
-        <Shell />
-      </div>
-    </AppStateProvider>
+    <ErrorBoundary>
+      <AppStateProvider>
+        <div className="pt-safe mx-auto min-h-screen max-w-md bg-bg text-text-primary">
+          <Shell />
+        </div>
+      </AppStateProvider>
+    </ErrorBoundary>
   );
 }

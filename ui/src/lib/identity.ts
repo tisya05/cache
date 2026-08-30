@@ -16,9 +16,20 @@ const fromHex = (hex: string): Uint8Array => {
   return bytes;
 };
 
+const isValidSecretHex = (hex: string): boolean => /^[0-9a-f]{64}$/i.test(hex);
+
 export function loadIdentitySecret(): Uint8Array | null {
   const hex = localStorage.getItem(STORAGE_KEY);
-  return hex ? fromHex(hex) : null;
+  if (!hex) return null;
+  // A malformed value (wrong length, non-hex chars -- e.g. from a partial
+  // write during a crash) would otherwise silently decode into a garbage
+  // secret rather than throwing, and break downstream instead of here where
+  // it's easy to recover from.
+  if (!isValidSecretHex(hex)) {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+  return fromHex(hex);
 }
 
 export function hasIdentity(): boolean {

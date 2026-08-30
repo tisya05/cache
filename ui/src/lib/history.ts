@@ -8,6 +8,8 @@
  * state is reconstructed by re-executing real transactions, not invented.
  */
 
+import { readJSON } from "@/lib/safe-storage";
+
 const HISTORY_KEY = "cache:proof-history:v1";
 
 export type HistoryEntry = {
@@ -25,8 +27,7 @@ export const fromHex = (hex: string): Uint8Array => {
 };
 
 export function loadHistory(): HistoryEntry[] {
-  const raw = localStorage.getItem(HISTORY_KEY);
-  return raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
+  return readJSON<HistoryEntry[]>(HISTORY_KEY, []);
 }
 
 export function appendHistoryEntry(entry: Omit<HistoryEntry, "periodIdHex"> & { periodId: Uint8Array }): void {

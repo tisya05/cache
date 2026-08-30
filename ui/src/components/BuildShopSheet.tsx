@@ -35,7 +35,19 @@ export function BuildShopSheet({
                   affordable ? "border-border bg-surface" : "border-border-subtle bg-surface-subtle opacity-40"
                 }`}
               >
-                <img src={b.sprite} alt={b.label} className="h-12 w-auto object-contain" draggable={false} />
+                <div className="relative flex h-14 w-14 items-center justify-center">
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded-full"
+                    style={{ backgroundColor: "var(--color-accent)", opacity: affordable ? 0.25 : 0.1, filter: "blur(8px)" }}
+                  />
+                  <img
+                    src={b.sprite}
+                    alt={b.label}
+                    className="relative h-12 w-auto object-contain"
+                    style={{ filter: "brightness(1.15)" }}
+                    draggable={false}
+                  />
+                </div>
                 <span className="text-xs font-semibold">{b.label}</span>
                 <span className="flex items-center gap-1 text-xs text-accent">
                   <span>●</span> {b.cost}

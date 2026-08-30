@@ -4,7 +4,7 @@
     {
       "name": "cache-ui",
       "runtimeExecutable": "/opt/homebrew/bin/node",
-      "runtimeArgs": ["/Users/tisyasingh/Midnight-Hackathon/node_modules/.bin/vite", "/Users/tisyasingh/Midnight-Hackathon/ui", "--config", "/Users/tisyasingh/Midnight-Hackathon/ui/vite.config.ts"],
+      "runtimeArgs": ["/Users/tisyasingh/Midnight-Hackathon/node_modules/.bin/vite", "preview", "/Users/tisyasingh/Midnight-Hackathon/ui", "--config", "/Users/tisyasingh/Midnight-Hackathon/ui/vite.config.ts", "--port", "5173", "--strictPort"],
       "port": 5173
     }
   ]

@@ -32,6 +32,17 @@ export default defineConfig({
   build: {
     target: "esnext",
     minify: false,
+    rollupOptions: {
+      // The proof pipeline (@midnight-ntwrk/midnight-js-http-client-proof-provider,
+      // which pulls createProvingPayload from midnight-js-protocol) crashes
+      // in production with "Cannot read properties of undefined" -- an
+      // Effect-TS package whose module init relies on side effects that
+      // Rollup's tree-shaking drops as "unused" in prod but esbuild's dev
+      // pre-bundler never removes. Disabling tree-shaking is a blunt
+      // instrument, but it's a one-line, low-risk way to test that theory
+      // under time pressure -- bundle size doesn't matter for tonight.
+      treeshake: false,
+    },
   },
   server: {
     // cloudflared quick tunnels hand out a new random hostname every

@@ -20,7 +20,7 @@ import {
   type BuildingDef,
 } from "@/lib/city-grid";
 
-const GRID_SIZE = 3;
+const GRID_SIZE = 4;
 
 export function CityScreen() {
   const { client, ledger, navigate, refreshLedger } = useAppState();
@@ -206,9 +206,31 @@ export function CityScreen() {
           <div className="w-full max-w-xs rounded-2xl bg-surface-elevated p-5" onClick={(e) => e.stopPropagation()}>
             <p className="mb-3 text-center font-bold">Upgrade to {upgradePrompt.to.label}?</p>
             <div className="mb-4 flex items-center justify-center gap-4">
-              <img src={upgradePrompt.from.sprite} alt={upgradePrompt.from.label} className="h-14 w-auto object-contain opacity-40" />
+              <div className="relative flex h-16 w-16 items-center justify-center">
+                <div
+                  className="pointer-events-none absolute inset-0 rounded-full"
+                  style={{ backgroundColor: "var(--color-accent)", opacity: 0.15, filter: "blur(10px)" }}
+                />
+                <img
+                  src={upgradePrompt.from.sprite}
+                  alt={upgradePrompt.from.label}
+                  className="relative h-14 w-auto object-contain opacity-60"
+                  style={{ filter: "brightness(1.2)" }}
+                />
+              </div>
               <span className="text-text-tertiary">→</span>
-              <img src={upgradePrompt.to.sprite} alt={upgradePrompt.to.label} className="h-14 w-auto object-contain" />
+              <div className="relative flex h-16 w-16 items-center justify-center">
+                <div
+                  className="pointer-events-none absolute inset-0 rounded-full"
+                  style={{ backgroundColor: "var(--color-accent)", opacity: 0.3, filter: "blur(10px)" }}
+                />
+                <img
+                  src={upgradePrompt.to.sprite}
+                  alt={upgradePrompt.to.label}
+                  className="relative h-14 w-auto object-contain"
+                  style={{ filter: "brightness(1.2)" }}
+                />
+              </div>
             </div>
             <p className="mb-4 text-center text-sm text-text-secondary">
               Costs <span className="font-bold text-accent">{upgradeDiff}</span> tokens (the price difference)
