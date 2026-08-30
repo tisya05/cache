@@ -1,12 +1,12 @@
 # Nomi
 
-### Save together. Reveal nothing.
+### Your progress is public. Your money never is.
 
-**A savings game for students where nobody ever sees your money.**
+**A savings game for the years before you're a real adult.**
 
-> **For** students who want to compete with friends on saving money, **who** would otherwise have to either lie about their numbers or hand their bank data to a stranger, **we** prove they hit their savings goal **without revealing** income, spending, or a single transaction.
+> **For** teenagers, students, people in their first job, and anyone who's just moved countries and started from zero — **who** have to either self-report numbers nobody can verify, or hand over their bank account and be watched — **we** prove they hit their savings goal **without revealing** income, spending, or a single transaction.
 
-Saving money with friends should not require sharing your bank balance.
+How do you prove you're financially reliable before you have any record to point at?
 
 Nomi lets you compete on savings while keeping your financial data private. Your device processes your transactions locally, generates a zero-knowledge proof that you hit your savings goal, and publishes only your savings tier.
 
@@ -20,9 +20,9 @@ Nobody sees the money.
 
 ## ✨ The idea
 
-A competitive savings leaderboard has a pretty annoying problem.
+A competitive savings app forces a choice.
 
-Self-reported numbers are easy to fake. Server-verified numbers mean handing your financial data to someone else.
+Self-reported numbers aren't verifiable. Server-verified numbers mean handing your financial data to someone else — which is how every product in this space works today.
 
 **Nomi is the third option.**
 
