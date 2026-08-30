@@ -477,6 +477,41 @@ Without `.env` values, the app still runs end to end on seeded data through the 
 
 ---
 
+# 💳 Why this matters
+
+**More than 80% of 18–19 year olds in the US are credit invisible or unscorable**
+(CFPB). It falls under 40% by ages 20–24, and 25.3 million adults were unscored as
+of 2020. That isn't an edge case — it's the default state of being young, and it's
+the exact window Nomi is built for.
+
+The consequences are ordinary and expensive: no first apartment without a
+co-signer, worse rates on everything, or a secured card that needs money you don't
+have yet. The skew is stark too — roughly 15% of Black and Hispanic consumers are
+credit invisible against 9% of white consumers.
+
+The existing answer is to earn standing by being watched. Greenlight runs
+$5.99–$19.98 a month; Step and Current are free because the product is the data
+relationship. Step will even build genuine credit history for under-18s — by
+reporting everything you do to a bureau.
+
+**That's the trade Nomi breaks. Standing without disclosure.**
+
+A tier is a claim about financial behaviour that verifies itself. It carries no
+income, no balances, no merchant history and nothing to leak, so it can cross an
+institution or a border without a data-sharing agreement behind it.
+
+That points at two things. Banks want customers early but can't underwrite a file
+that doesn't exist — their options today are a parent's co-signature or a secured
+card. A verifiable behavioural signal with no PII attached opens starter credit
+lines and first cards to people who currently can't be assessed at all. And someone
+who moves countries leaves most of their history behind; companies like Nova Credit
+exist because that problem is worth paying to solve, and they solve it by moving
+your bureau file. A tier needs none of that machinery.
+
+**To be precise about what exists today:** Nomi is a savings game. The tier is a
+proven, portable claim, and the credential and underwriting uses are the direction
+that follows from it — not something shipped this weekend.
+
 # 🌱 What's next
 
 The long-term goal is simple:
