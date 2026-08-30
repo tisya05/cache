@@ -35,10 +35,18 @@ import {
 import { CATEGORY_TAXONOMY, isKnownCategory, type TransactionEvent } from '../types.js';
 import { chunk } from '../util.js';
 
-// Verified against the live API on 2026-08-29 (models.list for this key) --
-// gemini-2.0-flash no longer exists. See the file-level comment: this is a
-// moving target, kept isolated to this one constant on purpose.
-export const GEMINI_MODEL = 'gemini-2.5-flash';
+// Verified live against a fresh API key on 2026-08-30. gemini-2.5-flash's
+// free tier is capped at 20 requests/DAY total (confirmed via the actual
+// 429 body: quotaId GenerateRequestsPerDayPerProjectPerModel-FreeTier,
+// quotaValue 20) -- far too tight for a batched-but-still-per-sync call.
+// gemini-2.5-flash-lite is deprecated for new API keys (404s, redirects
+// callers to gemini-3.5-flash-lite). This task is plain classification from
+// {memo, amountBucket} into a fixed category list -- it doesn't need a full
+// flash model's reasoning depth, and Google's lite tier carries a
+// substantially higher free daily quota for exactly this kind of workload.
+// See the file-level comment: this is a moving target, kept isolated to
+// this one constant on purpose.
+export const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 const GEMINI_ENDPOINT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /** Max transactions per Gemini call, to stay well under the free-tier rate limit. */

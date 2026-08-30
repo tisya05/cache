@@ -15,16 +15,47 @@ is a tier number.
 
 Built for the MLH Midnight Hackathon, August 2026.
 
+Teen and young-adult money apps already have a market: Greenlight charges
+$5.99–14.98/month on millions of subscribers, and Step, Current, and Chime spend
+heavily to acquire the same users. A savings *game* people join because their
+friends are on it acquires that audience for free — and it only works because the
+privacy problem is actually solved, not glossed over.
+
 ---
 
 ## Demo
 
 **Video:** _<!-- TODO: link -->_
-**Screenshot:** _<!-- TODO: City + Prove -->_
+
+| Prove — the centerpiece | City |
+|---|---|
+| ![Prove screen: two columns, everything that stays private on the left, only a tier number goes public on the right](docs/screenshots/prove.jpg) | ![City screen: isometric city, token balance, real income/spend/saved progress toward the savings goal](docs/screenshots/city.jpg) |
+
+| Insights — spending by category | Review queue |
+|---|---|
+| ![Insights: real spending-by-category donut and ranked list, locked as private data](docs/screenshots/insights.jpg) | ![Review queue: swipe card for a transaction the categorizer wasn't confident about](docs/screenshots/review.jpg) |
+
+Two more, for good measure: the [friends leaderboard](docs/screenshots/friends.jpg) (tiers and
+streaks only, never a dollar figure), and [a tier claim the contract actually rejected](docs/screenshots/prove-rejected.jpg)
+— `failed assert: period already claimed`, the circuit's own assertion, not application code.
 
 The loop: connect your email → transactions are parsed and categorised on-device →
-seal the month → **a real SNARK is generated in ~3 seconds** → your tier is published,
-tokens are minted, and your city grows. Friends see the tier. Nobody sees the money.
+seal the month → **a real SNARK is generated in a few seconds** → your tier is
+published, tokens are minted, and your city grows. Friends see the tier. Nobody sees
+the money.
+
+---
+
+## Documentation
+
+This README covers the product, the architecture, and the privacy guarantees — it's
+the whole story for anyone reviewing the submission. Two more documents exist for
+narrower, task-specific purposes:
+
+| Doc | What it's for |
+|---|---|
+| [`docs/DEVPOST.md`](docs/DEVPOST.md) | The Devpost submission copy (tagline, inspiration, challenges) |
+| [`docs/DEMO-SCRIPT.md`](docs/DEMO-SCRIPT.md) | The voiceover script and shot list used to record the demo video |
 
 ---
 
@@ -35,6 +66,7 @@ Requires Docker and Node 20+.
 ```bash
 git clone https://github.com/tisya05/cache && cd cache
 npm install
+cp .env.example .env   # fill in GMAIL_USER/GMAIL_APP_PASSWORD and GEMINI_API_KEY — both optional, see below
 
 # 1. Start a local Midnight devnet (node + indexer + proof server)
 docker compose -f docker/devnet.yml up -d
@@ -48,7 +80,15 @@ npm run test --workspace=ingest
 
 # 4. Run the app
 npm run dev --workspace=ui
+
+# 5. Optional — real email ingest instead of seeded data
+#    (IMAP needs a real socket, so it runs as a local bridge, not in the browser)
+npx tsx --env-file=.env ingest/scripts/serve.ts
 ```
+
+Without `.env` values, the app still runs end to end on seeded data that goes through
+the exact same parser and categorizer as a real inbox — nothing about the pipeline
+changes, only where the raw messages come from.
 
 ---
 
@@ -57,7 +97,7 @@ npm run dev --workspace=ui
 ```mermaid
 flowchart LR
     subgraph device["📱 Your device — nothing here leaves"]
-        E["Email (IMAP)"] --> P["Parser + heuristics"]
+        E["Email (IMAP bridge)"] --> P["Parser + heuristics"]
         P --> C["Categoriser"]
         C --> W["Witness builder<br/>income · spend · salt"]
     end
@@ -104,14 +144,45 @@ Every boundary where data does cross:
 
 | Boundary | What crosses | Mitigation |
 |---|---|---|
-| Device → LLM | Memo text + bucketed amount, ambiguous transactions only | Known merchants categorised locally with zero disclosure; names stripped; amounts bucketed to $25 brackets; the user previews the exact payload and a structural gate rejects any batch that doesn't match it |
+| Device → LLM | Memo text + bucketed amount, ambiguous transactions only | Known merchants (Amazon, Starbucks, Uber, DoorDash, bank alerts) categorised locally with zero disclosure; names stripped; amounts bucketed to $25 brackets; the user previews the exact payload and a structural gate rejects any batch that doesn't match it |
 | Device → proof server | Witness (income total, spend total, salt) | Self-hosted on localhost |
 | Device → chain | Tier, nullifier, commitment, block count | Public by design; commitments are opaque |
-| IMAP → device | Email bodies | Local only — never reaches a server |
+| IMAP → device | Email bodies | Local only — parsed by a bridge process on your own machine, never reaches a server |
 
 Note: the LLM is Gemini Flash on the free tier, where Google may use inputs to
 improve their models. That is why heuristics handle the majority locally and only
-stripped fragments are ever sent.
+stripped fragments are ever sent — and only for the two senders (Venmo, Zelle) whose
+memos are free-text in the first place. Every other known sender is resolved with
+regexes, with zero disclosure.
+
+---
+
+## What's real
+
+Everything above describes what's actually running, not a target. Concretely:
+
+- **Real IMAP ingest.** `ingest/scripts/serve.ts` runs the actual parser against a
+  real Gmail inbox over IMAP and returns real transaction events — this isn't a
+  fixture path, it's the literal code that reads your email. It runs as a local
+  bridge (proxied into the app the same way the proof server is) because IMAP needs
+  a raw socket a browser can't open.
+- **Real categorization.** Known senders resolve locally by regex. Genuinely
+  ambiguous Venmo/Zelle memos batch through Gemini; anything low-confidence — or
+  anything Gemini itself was unsure about — lands in a swipeable review queue.
+  Every correction is remembered, including ones you make later from the full
+  transaction log, not just the review queue.
+- **Real proofs.** Every `proveSavings` call in the app — including the demo
+  data-backfill dev tool in Profile — runs the actual Compact circuit. A tier
+  claim the totals don't support is rejected by the contract's own assertion, not
+  application code.
+- **Real, honest degradation.** No `GEMINI_API_KEY`? Ambiguous transactions route
+  straight to manual review instead of throwing. Gemini rate-limited mid-sync?
+  Same fallback, same result — the app never crashes on an LLM failure, it just
+  asks you.
+
+What's still simulated: the friends leaderboard (seeded accounts — the tier/streak
+display logic itself is real, and no dollar figure is ever computed for them to
+begin with, let alone published), and on-chain deployment (see Limitations below).
 
 ---
 
@@ -123,7 +194,7 @@ ledger 8.1.0. All four circuits produce prover and verifier keys.
 `npm run test --workspace=contract` — **17 passed**:
 
 ```
-PROOF RECEIVED          : 4508 bytes in 3.3 s
+PROOF RECEIVED          : 4508 bytes in 3.5 s
 proof magic             : "midnight:proof-versioned:"
 
 REJECTED with           : failed assert: savings below claimed tier
@@ -163,9 +234,11 @@ Compact's standard library exposes hashing, commitments, Merkle paths and curve
 operations, but **no RSA, no big-integer modular exponentiation, and no SHA-256**,
 which DKIM requires. Documented as the production path rather than implemented.
 
-Also not real yet: transactions in the demo are seeded (they run through the real
-parser and categoriser, not pre-labelled fixtures), the leaderboard's friends are
-seeded accounts, and there is no multi-user backend.
+Also not real yet: the friends leaderboard's accounts are seeded, there is no
+multi-user backend, and the contract has not been deployed to a live network (see
+`docs/DEVPOST.md` for why — Preprod's DUST registration window exceeded the
+hackathon deadline). The client is written against a swappable interface, so
+deployment is a configuration change, not a rewrite.
 
 ---
 

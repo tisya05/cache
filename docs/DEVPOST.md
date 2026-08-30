@@ -36,6 +36,8 @@ proof history.
   carry-forward committed savings balance makes sustained lying break the books.
 - **Ingest** — IMAP email parsing with per-sender heuristics that run locally. Only
   genuinely ambiguous memos reach an LLM, with names stripped and amounts bucketed.
+  Corrections you make — on a card the pipeline flagged, or later from a full
+  transaction log — are remembered and folded back into every downstream view.
 - **Mobile-first PWA** — React 19, Vite, Tailwind v4. Installs to an iPhone home
   screen. (The recommended mobile SDK for Midnight is Android-only.)
 
@@ -46,6 +48,11 @@ runs. We found the network's support matrix, pinned the toolchain to Compact 0.3
 blocked by the network's ~12-hour DUST registration initialisation, which exceeded
 the hackathon window — so contract access sits behind a swappable interface and
 deployment is a configuration change.
+
+IMAP also can't run in a browser at all — it needs a raw TCP socket. Rather than
+fake the ingest step, we ran the real parser as a tiny local bridge process and
+proxied it into the PWA the same way the proof server already was, so "connect your
+email" in the app is calling the literal same code that reads a real inbox over IMAP.
 
 ## What we learned
 Naming your own trust boundary is worth more than overclaiming. Cache's README
