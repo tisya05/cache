@@ -1,124 +1,171 @@
 # Demo video — script
 
-**Hard rules:** under 2:00. Must state the hackathon name at the start. Must be
-recorded this weekend. Screen recording of the PWA on the iPhone, voiceover.
+**Track: Mobile.** Its brief — *"sensitive information never leaves the device
+unproven"* — is literally what Nomi does, and it's the thinner field.
 
-Record on the phone: iOS Control Centre → Screen Recording, with mic on.
+**Hard rules:** under 2:00. Hackathon name at the start. Recorded this weekend.
+Screen recording of the PWA on the iPhone, voiceover.
 
-Timings below sum to ~111s, leaving buffer under the 2:00 cap for pacing and
-pauses. If a take runs long, cut in this order: Future scope → Automatic
-tracking → Value. Never cut the Proof or Cheat beats — they're the whole case.
-
----
-
-### 0:00 — Hook (15s)
-
-> "Hey, I'm Tisya, and this is my demo for the Midnight Hackathon.
->
-> A savings leaderboard shouldn't be possible — either everyone lies, or
-> everyone hands their bank account to a stranger.
->
-> Nomi is the third option."
-
-**On screen:** the Nomi icon on your iPhone home screen, then tap to open.
+**~258 words ≈ 112 seconds.** Real buffer under the cap.
 
 ---
 
-### 0:15 — Automatic tracking (16s)
+## Why it's shaped this way
 
-> "It reads my income and spending from my email automatically. Known
-> merchants are categorized on-device, never leaving it. Only a genuinely
-> ambiguous memo gets sent anywhere — names stripped, amount rounded to a
-> bracket."
+Every winner from the last event does the same eight things. This hits all of them:
 
-**On screen:** Connect → sync → transactions appear → swipe one card in the
-review queue.
+1. Opens on an external tension, never "let me show you my app"
+2. A crisp mechanism sentence *before* the demo
+3. Names the actual primitive out loud — commitment, nullifier, circuit
+4. Speaks real numbers
+5. An explicit "this is real, not a mockup" list
+6. Precise about what is NOT live — say **"local devnet"**, never "deployed" or "mainnet"
+7. A mirrored closing tagline
+8. No philosophical "why Midnight" — the primitive and its consequence, then move
 
----
-
-### 0:31 — The proof (33s) — THE CENTREPIECE
-
-> "At the end of the month, my phone proves I hit my savings goal — without
-> revealing what I earn, what I spent, or where.
->
-> This is the only place Midnight touches anything here. Not the email, not
-> the categorizing — just this one claim, made to an audience with every
-> reason not to trust me.
->
-> Everything on the left stays on my device. The only thing that goes public
-> is a tier number. That's it."
-
-**On screen:** Prove — hold on the private/public split for a beat. Tap
-Generate. Let the proof run. Tier lands, tokens mint, city grows.
-
-> "That's a real zero-knowledge proof, generated in a few seconds."
-
-*Why this matters more than it sounds:* every past Midnight hackathon winner
-used ZK for institutional plumbing — clinical trials, voting, KYC. Here it's
-consumer, and it's the moment the audience actually watches happen, not
-invisible infrastructure. If there's room, one line of that framing belongs
-right here, e.g. "usually this kind of proof is invisible — here it's the
-whole feature." Cut it first if the beat runs long; the screen already makes
-the point without narration.
+Lead with the mechanism. The city and leaderboard are **evidence the mechanism
+produces something people would use** — not the hook. Don't open on the city.
 
 ---
 
-### 1:04 — Social without disclosure (14s)
+### 0:00 — Hook (13s)
 
-> "My friends see my tier and my city — never a dollar figure, not hidden,
-> not blurred, never published in the first place.
+> "Hey, I'm Tisya — this is my demo for the Midnight Hackathon.
 >
-> This is what only I can see."
+> Nomi is a savings game for the years before you're a real adult — teenagers,
+> students, your first job.
+>
+> A social savings app forces a choice: either everyone lies about their
+> numbers, or everyone hands over their bank account. Nomi is the third option."
 
-**On screen:** Friends leaderboard, scroll. Then Insights — the private view.
+**Screen:** Nomi icon on the home screen, tap to open.
 
 ---
 
-### 1:18 — The cheat (14s)
+### 0:13 — Market (10s)
+
+> "Teen money apps charge up to fifteen a month — and every one works by
+> watching you."
+
+**Screen:** quick cut — City, then leaderboard.
+
+*Moved up from the end deliberately. A market number lands while judges are
+still forming an opinion, not after.*
+
+---
+
+### 0:23 — The mechanism (17s)
+
+> "Local heuristics resolve most transactions with zero disclosure. For a
+> genuinely ambiguous memo, names get stripped and the amount bucketed before
+> anything reaches an LLM — I see the exact payload first, and if it doesn't
+> match, the call never fires."
+
+**Screen:** Connect → sync → transactions appear → swipe one review-queue card,
+holding a beat on the low-confidence guess.
+
+---
+
+### 0:40 — The proof (30s) — THE CENTREPIECE
+
+> "At the end of the month, my phone proves I hit my savings goal without
+> revealing what I earn or spent. That proof sets my tier, earns Noms, and grows
+> my city.
+>
+> Totals are sealed with a commitment before the leaderboard opens, and a
+> nullifier blocks claiming the same month twice. Four Compact circuits.
+>
+> Everything on the left stays on my device. The only thing public is a tier
+> number."
+
+**Screen:** Prove — hold on the private/public split. Tap Generate, let it run.
+Tier lands, Noms mint, city grows.
+
+> "A real Midnight circuit. A real proof — about four and a half kilobytes,
+> generated in a few seconds, on my phone."
+
+**⚠️ Never cut inside Generate → tier landing.** A cut there reads as hiding
+something.
+
+**⚠️ Don't state a proof time.** It ranged 3.3s to 13.9s in testing. "A few
+seconds" is honest; a number the screen contradicts is worse than a vague one.
+**4,508 bytes is stable across every run — that one is safe to say exactly.**
+
+**Optional, strongest shot available:** mirror the phone to the Mac (QuickTime →
+New Movie Recording → select iPhone as camera), put the terminal beside it
+running:
+
+```
+docker logs -f --tail 0 midnight-proof-server 2>&1 | grep --line-buffered -E "prove|proof ok"
+```
+
+Tap Generate and `POST /prove → proof ok` lands in the same frame. Skip if it
+fights you.
+
+---
+
+### 1:10 — The cheat (12s)
 
 > "And you can't fake it."
 
-**On screen:** Profile → Cheat Mode on → tamper the numbers → Prove →
-**rejected.** Say nothing while it rejects. Let it land.
+**Screen:** Profile → Cheat Mode → tamper → Prove → **rejected.** Say nothing
+while it rejects. Let it land.
 
-> "The contract rejected it. Not my code — the circuit's own math."
+> "The circuit rejected it. Not a UI check — a proof cannot be generated for a
+> false statement."
 
----
-
-### 1:32 — Value (12s)
-
-> "Teen money apps already charge up to fifteen dollars a month. Nobody's
-> built a competitive one — because until now, showing your progress meant
-> showing your money."
-
-That line carries both the market (a paying category already exists) and the
-mechanism (peer-visible progress works — Strava, Duolingo streaks — money was
-just the one category it was never safe to try in). Don't unpack that in the
-video; the line does it in one breath. Say it, don't explain it.
+**Phone only on this beat — no terminal.** The cheat never reaches the proof
+server: the assert fires during local circuit execution, before proof data
+exists. That's correct (you can't prove a false statement), but an empty
+terminal reads as *broken* on camera, not as *rejected*.
 
 ---
 
-### 1:44 — Future scope (7s) — cut first if you're over time
+### 1:22 — Completion (12s)
 
-> "Next: proving it straight from a cryptographically signed email, instead
-> of a number I submit."
+> "Not a mockup: real inbox, real Gemini calls, real proof server, seventeen
+> contract tests against a local Midnight devnet."
 
-One sentence, clearly future-tense, no more. This is the DKIM/ZK Email
-closure already written up in the README's Limitations and Next sections —
-say it as direction, not as a claim about what's shipped today.
+**Screen:** quick cut — Friends leaderboard, then City.
+
+**⚠️ Say "seventeen," not "112."** The terminal shows `Tests 17 passed` for the
+contract suite. 112 is contract + ingest combined. A number your footage
+contradicts makes judges doubt everything else.
+
+---
+
+### 1:34 — Business, limit, tagline (16s)
+
+> "Leaderboards aren't new. What's new is what the leaderboard is allowed to
+> learn.
+>
+> Before you have a credit score, you have nothing. Same if you move countries.
+> A tier you can prove but never have to explain is where one should start.
+>
+> Self-entered data can still be inflated within a month. DKIM-signed email
+> closes that — documented, not claimed.
+>
+> Nomi proves your progress. Reveals nothing."
+
+**Screen:** best city shot, hold through the tagline.
+
+*The limitation line is not a weakness. Judges explicitly praised exactly this
+in two of four winners — "deliberately choosing what to keep public rather than
+claiming false privacy guarantees."*
 
 ---
 
 ## Recording notes
 
-- Record 3 takes minimum. The first is always stiff.
-- Do the Prove and Cheat sections as one continuous take if possible — cuts
-  there look like you're hiding something.
-- If a screen isn't finished, cut that beat rather than showing something
-  broken. A 90-second video of working things beats 2:00 with a dead screen.
-- Speak slower than feels natural. Everyone rushes.
-- Check the audio before recording all three takes.
-- Don't claim Midnight is protecting the email or Gemini steps — it isn't,
-  and the script above doesn't say it does. It's the one thing that makes the
-  Proof beat possible; let the other beats be about data minimization
-  instead, which is a different (and true) claim.
+- Three takes minimum. The first is always stiff. Stop at three.
+- **Record the screen silently, add voiceover after.** Far easier to retime words
+  to footage than the reverse.
+- Proof and Cheat as continuous takes. Cuts there look like hiding.
+- Speed the proof wait 2× so it lands around 4s — but never remove it. An instant
+  proof looks fake.
+- Cut all typing, scrolling and navigation. Jump-cut between screens.
+- Speak slower than feels natural.
+- If a screen isn't finished, cut that beat rather than show something broken.
+
+**Cut order if over time:** DKIM sentence → completion list → market beat.
+**Never cut the proof or the cheat.**

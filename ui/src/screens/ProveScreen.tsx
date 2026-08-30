@@ -98,7 +98,7 @@ export function ProveScreen() {
           <h1 className="text-2xl font-extrabold">Proof sealed!</h1>
           <p className="mt-1 text-text-secondary">You hit your goal.</p>
         </div>
-        <p className="text-xl font-bold text-accent">+{result.blocksEarned} tokens</p>
+        <p className="text-xl font-bold text-accent">+{result.blocksEarned} Noms</p>
         <div className="mt-2 w-full rounded-2xl border border-border bg-surface p-4 text-left">
           <p className="text-sm font-semibold text-text-secondary">Your city grew</p>
           <p className="mt-1 font-bold">New building unlocked!</p>
@@ -157,7 +157,7 @@ export function ProveScreen() {
       <div className="px-5">
         <h1 className="text-2xl font-extrabold">Prove your progress</h1>
         <p className="mt-1 text-sm text-text-secondary">
-          Math checks it. You get tokens. Nobody sees your data.
+          Math checks it. You get Noms. Nobody sees your data.
         </p>
 
         <div className="mt-6 grid grid-cols-2 gap-3">

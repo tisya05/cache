@@ -142,7 +142,7 @@ export function CityScreen() {
       {movingFrom && (
         <div className="mx-5 mt-3 flex items-center justify-between gap-3 rounded-xl bg-accent-muted/30 px-3 py-2">
           <p className="text-xs font-semibold text-accent-light">
-            Tap a tile to move it. Removing won&apos;t refund tokens.
+            Tap a tile to move it. Removing won&apos;t refund Noms.
           </p>
           <div className="flex shrink-0 gap-3">
             <button type="button" onClick={handleRemove} className="text-xs font-bold text-error">
@@ -261,7 +261,7 @@ export function CityScreen() {
               </div>
             </div>
             <p className="mb-4 text-center text-sm text-text-secondary">
-              Costs <span className="font-bold text-accent">{upgradeDiff}</span> tokens (the price difference)
+              Costs <span className="font-bold text-accent">{upgradeDiff}</span> Noms (the price difference)
             </p>
             <PrimaryButton disabled={blocks < upgradeDiff || busy} onClick={handleConfirmUpgrade}>
               {busy ? "Upgrading…" : "Upgrade"}
