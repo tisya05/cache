@@ -60,6 +60,13 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/proof-server/, ""),
       },
+      // Same pattern as /proof-server: the email ingest bridge (ingest/scripts/serve.ts)
+      // opens the real IMAP connection, which the browser can't do itself.
+      "/email-server": {
+        target: "http://localhost:4100",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/email-server/, ""),
+      },
     },
   },
   // `vite preview` (serving the production build) reads this section, NOT
@@ -73,6 +80,11 @@ export default defineConfig({
         target: "http://localhost:6300",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/proof-server/, ""),
+      },
+      "/email-server": {
+        target: "http://localhost:4100",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/email-server/, ""),
       },
     },
   },

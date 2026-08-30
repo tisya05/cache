@@ -5,7 +5,7 @@ export function WelcomeScreen() {
   const { createIdentity, navigate } = useAppState();
 
   return (
-    <div className="flex min-h-screen flex-col justify-between overflow-y-auto bg-bg-deep px-6 pb-safe pt-16">
+    <div className="flex min-h-screen flex-col justify-between overflow-y-auto bg-bg px-6 pb-safe pt-4">
       <div />
 
       <div className="relative mx-auto flex flex-col items-center px-4 text-center">

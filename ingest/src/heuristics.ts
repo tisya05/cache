@@ -32,17 +32,22 @@ function buildEvent(params: {
   amountCents: number;
   merchant: string;
   memo: string;
+  /** The other party's name, e.g. a Zelle recipient -- distinct from `memo`,
+   *  which is reserved for an actual human-written message. A bare name is
+   *  not "a message" and must never be displayed quoted as if it were one. */
+  counterparty?: string;
   category: string;
   confidence: number;
   timestamp: string;
 }): TransactionEvent {
-  const { type, amountCents, merchant, memo, category, confidence, timestamp } = params;
+  const { type, amountCents, merchant, memo, counterparty, category, confidence, timestamp } = params;
   return {
-    id: makeEventId(merchant, timestamp, amountCents, memo),
+    id: makeEventId(merchant, timestamp, amountCents, memo || counterparty || ''),
     type,
     amountCents,
     merchant,
     memo,
+    ...(counterparty ? { counterparty } : {}),
     category,
     categoryGroup: getCategoryGroup(category),
     confidence,
@@ -138,21 +143,23 @@ export function parseVenmo(subject: string, body: string, timestamp: string): Pa
   const paidBy = text.match(VENMO_PAID_BY_USER);
   if (paidBy) {
     const amountCents = parseMoneyToCents(paidBy[1]);
+    const counterparty = paidBy[2].trim();
     const memo = paidBy[3].trim();
     const { category, confidence, llmEligible } = categorizeP2pMemo(memo, 'spend');
     return {
-      event: buildEvent({ type: 'spend', amountCents, merchant: 'Venmo', memo, category, confidence, timestamp }),
+      event: buildEvent({ type: 'spend', amountCents, merchant: 'Venmo', memo, counterparty, category, confidence, timestamp }),
       llmEligible,
     };
   }
 
   const paidTo = text.match(VENMO_PAID_TO_USER);
   if (paidTo) {
+    const counterparty = paidTo[1].trim();
     const amountCents = parseMoneyToCents(paidTo[2]);
     const memo = paidTo[3].trim();
     const { category, confidence, llmEligible } = categorizeP2pMemo(memo, 'income');
     return {
-      event: buildEvent({ type: 'income', amountCents, merchant: 'Venmo', memo, category, confidence, timestamp }),
+      event: buildEvent({ type: 'income', amountCents, merchant: 'Venmo', memo, counterparty, category, confidence, timestamp }),
       llmEligible,
     };
   }
@@ -167,6 +174,19 @@ export function parseVenmo(subject: string, body: string, timestamp: string): Pa
 
 const ZELLE_SENT = /you sent\s+\$([\d,.]+)\s+to\s+([^\n]+?)\s+via zelle(?:\s+for\s+["“](.*?)["”])?/i;
 const ZELLE_RECEIVED = /([^\n]+?)\s+sent you\s+\$([\d,.]+)\s+via zelle(?:\s+for\s+["“](.*?)["”])?/i;
+// Bank-hosted Zelle notifications (confirmed against real Bank of America
+// subject lines: "Zelle® payment of $4.25 to URVI GUPTA has been sent") use
+// a completely different template from the Zelle-app-style phrasing above.
+// Without this second pattern every one of these emails silently fell
+// through to "unrecognized" -- a real inbox produced 37 matched senders and
+// 0 parsed events until this was added.
+const ZELLE_BANK_SENT = /zelle®?\s+payment of\s+\$([\d,.]+)\s+to\s+([^\n]+?)\s+has been sent/i;
+const ZELLE_BANK_RECEIVED = /zelle®?\s+payment of\s+\$([\d,.]+)\s+from\s+([^\n]+?)\s+has been (?:deposited|received)/i;
+// The bank template DOES carry the sender's free-text memo -- rendered on its
+// own line as "Your message <text>" (confirmed against a real inbox: 50/72
+// sent emails had one, e.g. "Your message tamanna shoes"). It's optional --
+// Zelle doesn't require a message -- so absence is normal, not a parse miss.
+const ZELLE_BANK_MESSAGE = /your message\s+([^\n]+)/i;
 
 export function parseZelle(subject: string, body: string, timestamp: string): ParsedEmailResult | null {
   const text = `${subject}\n${body}`;
@@ -174,21 +194,50 @@ export function parseZelle(subject: string, body: string, timestamp: string): Pa
   const sent = text.match(ZELLE_SENT);
   if (sent) {
     const amountCents = parseMoneyToCents(sent[1]);
+    const counterparty = sent[2].trim();
     const memo = (sent[3] ?? '').trim();
     const { category, confidence, llmEligible } = categorizeP2pMemo(memo, 'spend');
     return {
-      event: buildEvent({ type: 'spend', amountCents, merchant: 'Zelle', memo, category, confidence, timestamp }),
+      event: buildEvent({ type: 'spend', amountCents, merchant: 'Zelle', memo, counterparty, category, confidence, timestamp }),
       llmEligible,
     };
   }
 
   const received = text.match(ZELLE_RECEIVED);
   if (received) {
+    const counterparty = received[1].trim();
     const amountCents = parseMoneyToCents(received[2]);
     const memo = (received[3] ?? '').trim();
     const { category, confidence, llmEligible } = categorizeP2pMemo(memo, 'income');
     return {
-      event: buildEvent({ type: 'income', amountCents, merchant: 'Zelle', memo, category, confidence, timestamp }),
+      event: buildEvent({ type: 'income', amountCents, merchant: 'Zelle', memo, counterparty, category, confidence, timestamp }),
+      llmEligible,
+    };
+  }
+
+  const bankSent = text.match(ZELLE_BANK_SENT);
+  if (bankSent) {
+    const amountCents = parseMoneyToCents(bankSent[1]);
+    const counterparty = bankSent[2].trim();
+    // The counterparty name goes in `counterparty`, never `memo` -- a bare
+    // name is not a message. The optional "Your message" line is the real,
+    // human-written memo, when the sender included one.
+    const memo = (text.match(ZELLE_BANK_MESSAGE)?.[1] ?? '').trim();
+    const { category, confidence, llmEligible } = categorizeP2pMemo(memo, 'spend');
+    return {
+      event: buildEvent({ type: 'spend', amountCents, merchant: 'Zelle', memo, counterparty, category, confidence, timestamp }),
+      llmEligible,
+    };
+  }
+
+  const bankReceived = text.match(ZELLE_BANK_RECEIVED);
+  if (bankReceived) {
+    const amountCents = parseMoneyToCents(bankReceived[1]);
+    const counterparty = bankReceived[2].trim();
+    const memo = (text.match(ZELLE_BANK_MESSAGE)?.[1] ?? '').trim();
+    const { category, confidence, llmEligible } = categorizeP2pMemo(memo, 'income');
+    return {
+      event: buildEvent({ type: 'income', amountCents, merchant: 'Zelle', memo, counterparty, category, confidence, timestamp }),
       llmEligible,
     };
   }
@@ -218,7 +267,8 @@ export function parsePaypal(subject: string, body: string, timestamp: string): P
         type: 'spend',
         amountCents,
         merchant: 'PayPal',
-        memo: counterparty,
+        memo: '',
+        counterparty,
         category,
         confidence: 1.0,
         timestamp,
@@ -237,7 +287,8 @@ export function parsePaypal(subject: string, body: string, timestamp: string): P
         type: 'income',
         amountCents,
         merchant: 'PayPal',
-        memo: counterparty,
+        memo: '',
+        counterparty,
         category,
         confidence: 1.0,
         timestamp,

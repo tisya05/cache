@@ -1,8 +1,11 @@
-import { Lock } from "lucide-react";
+import { useState } from "react";
+import { ChevronRight, Lock, X } from "lucide-react";
 import { PieChart, Pie, Cell, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useAppState } from "@/state/AppStateContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { NEEDS_WANTS_SAVINGS_COLORS } from "@/lib/chart-colors";
-import { computeSpendBreakdown, computeGoalSplit, computeTrend } from "@/lib/insights";
+import { computeSpendBreakdown, computeGoalSplit, computeTrend, computeSpendingByCategory, type CategorySlice } from "@/lib/insights";
+import { formatDollarsFromCents, formatShortDate } from "@/lib/format";
 
 const GROUP_LABELS: Record<"needs" | "wants" | "savings", string> = {
   needs: "Needs",
@@ -26,9 +29,12 @@ function LockedCard({ title, subtitle, children }: { title: string; subtitle?: s
 }
 
 export function InsightsScreen() {
+  const { navigate } = useAppState();
   const breakdown = computeSpendBreakdown();
   const goalSplit = computeGoalSplit();
   const trend = computeTrend();
+  const categorySlices = computeSpendingByCategory();
+  const [selectedCategory, setSelectedCategory] = useState<CategorySlice | null>(null);
 
   const donutData = (["needs", "wants", "savings"] as const).map((k) => ({
     key: k,
@@ -54,6 +60,15 @@ export function InsightsScreen() {
           </span>
         </div>
 
+        <button
+          type="button"
+          onClick={() => navigate("transactionLog")}
+          className="mb-4 flex w-full items-center justify-between rounded-2xl border border-border bg-surface p-4 text-left active:bg-surface-hover"
+        >
+          <span className="font-bold">View all transactions</span>
+          <ChevronRight size={18} className="text-text-tertiary" />
+        </button>
+
         <LockedCard title="Spending breakdown">
           <div className="flex items-center gap-4">
             <ResponsiveContainer width={120} height={120}>
@@ -75,6 +90,55 @@ export function InsightsScreen() {
               ))}
             </div>
           </div>
+        </LockedCard>
+
+        <LockedCard title="Spending by category" subtitle="Tap a category to see its transactions">
+          {categorySlices.length === 0 ? (
+            <p className="py-4 text-center text-sm text-text-tertiary">No spending yet this month.</p>
+          ) : (
+            <>
+              <div className="mb-3 flex justify-center">
+                <ResponsiveContainer width={140} height={140}>
+                  <PieChart>
+                    <Pie
+                      data={categorySlices}
+                      dataKey="amountCents"
+                      nameKey="category"
+                      innerRadius={42}
+                      outerRadius={64}
+                      paddingAngle={2}
+                      stroke="none"
+                    >
+                      {categorySlices.map((slice) => (
+                        <Cell key={slice.category} fill={slice.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }}
+                      itemStyle={{ color: "var(--color-text-primary)" }}
+                      labelStyle={{ color: "var(--color-text-primary)" }}
+                      formatter={(value: any, _name: any, item: any) => [formatDollarsFromCents(Number(value)), item.payload.category]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-1">
+                {categorySlices.map((slice) => (
+                  <button
+                    key={slice.category}
+                    type="button"
+                    onClick={() => setSelectedCategory(slice)}
+                    className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left active:bg-surface-hover"
+                  >
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: slice.color }} />
+                    <span className="flex-1 text-sm text-text-secondary">{slice.category}</span>
+                    <span className="text-sm font-bold text-text-primary">{formatDollarsFromCents(slice.amountCents)}</span>
+                    <span className="w-10 text-right text-xs text-text-tertiary">{slice.percent}%</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </LockedCard>
 
         <LockedCard title="Spending trend" subtitle={`Last ${trend.length} periods`}>
@@ -131,6 +195,42 @@ export function InsightsScreen() {
           </div>
         </LockedCard>
       </div>
+
+      {selectedCategory && (
+        <div className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={() => setSelectedCategory(null)}>
+          <div
+            className="max-h-[75vh] w-full overflow-y-auto rounded-t-[28px] bg-surface-elevated p-5 pb-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-1 flex items-center justify-between">
+              <p className="flex items-center gap-2 text-lg font-bold">
+                <span className="h-3 w-3 rounded-full" style={{ background: selectedCategory.color }} />
+                {selectedCategory.category}
+              </p>
+              <button type="button" onClick={() => setSelectedCategory(null)} aria-label="Close">
+                <X size={20} className="text-text-secondary" />
+              </button>
+            </div>
+            <p className="mb-4 text-sm text-text-tertiary">
+              {formatDollarsFromCents(selectedCategory.amountCents)} · {selectedCategory.percent}% of spending
+            </p>
+            <div className="space-y-2">
+              {selectedCategory.events.map((e) => (
+                <div key={e.id} className="flex items-center justify-between rounded-[14px] border border-border-subtle bg-surface-subtle px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {e.merchant}
+                      {e.counterparty && <span className="font-normal text-text-tertiary"> · {e.counterparty}</span>}
+                    </p>
+                    <p className="text-xs text-text-tertiary">{formatShortDate(e.timestamp)}</p>
+                  </div>
+                  <p className="text-sm font-bold">{formatDollarsFromCents(e.amountCents)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

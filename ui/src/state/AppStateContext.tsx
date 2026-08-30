@@ -14,7 +14,8 @@ export type Screen =
   | "friends"
   | "profile"
   | "prove"
-  | "review";
+  | "review"
+  | "transactionLog";
 
 interface AppStateValue {
   screen: Screen;
@@ -22,6 +23,7 @@ interface AppStateValue {
   identitySecret: Uint8Array | null;
   client: CacheContractClient | null;
   clientReady: boolean;
+  clientError: string | null;
   ledger: CacheLedgerSnapshot | null;
   refreshLedger: () => Promise<void>;
   createIdentity: () => void;
@@ -37,6 +39,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   });
   const [identitySecret, setIdentitySecret] = useState<Uint8Array | null>(() => loadIdentitySecret());
   const [client, setClient] = useState<CacheContractClient | null>(null);
+  const [clientError, setClientError] = useState<string | null>(null);
   const [ledger, setLedger] = useState<CacheLedgerSnapshot | null>(null);
 
   useEffect(() => {
@@ -45,11 +48,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     // Registration and history replay happen inside getCacheClient itself
     // (see cache-client.ts) so they run exactly once regardless of how many
     // times this effect fires.
-    getCacheClient(identitySecret).then(async (c) => {
-      if (cancelled) return;
-      setClient(c);
-      setLedger(await c.getLedgerSnapshot());
-    });
+    getCacheClient(identitySecret)
+      .then(async (c) => {
+        if (cancelled) return;
+        setClient(c);
+        setLedger(await c.getLedgerSnapshot());
+      })
+      .catch((err) => {
+        // Without this, a rejected promise here (a bad history entry, a
+        // dropped proof-server connection, anything) left clientReady false
+        // forever with no error and no way to tell -- just an unexplained,
+        // permanent "Loading…" screen.
+        if (cancelled) return;
+        setClientError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
@@ -74,11 +86,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       identitySecret,
       client,
       clientReady: client !== null,
+      clientError,
       ledger,
       refreshLedger,
       createIdentity,
     }),
-    [screen, navigate, identitySecret, client, ledger, refreshLedger, createIdentity],
+    [screen, navigate, identitySecret, client, clientError, ledger, refreshLedger, createIdentity],
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;

@@ -1,17 +1,32 @@
 import { useState } from "react";
-import { Mail, PenLine, Sparkles, Lock, ArrowRight, Check } from "lucide-react";
+import { Mail, Lock, ArrowRight, Check, Loader2 } from "lucide-react";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { useAppState } from "@/state/AppStateContext";
 import { markOnboarded } from "@/lib/app-storage";
+import { syncEmailInbox } from "@/lib/email-sync";
 
 export function ConnectScreen() {
   const { navigate } = useAppState();
-  const [demoLoaded, setDemoLoaded] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<
+    { state: "idle" } | { state: "syncing" } | { state: "done"; count: number; needsReview: number } | { state: "error"; error: string }
+  >({ state: "idle" });
 
   const finish = () => {
     markOnboarded();
     navigate("city");
   };
+
+  const handleEmailSync = async () => {
+    setEmailStatus({ state: "syncing" });
+    const result = await syncEmailInbox();
+    if (result.ok) {
+      setEmailStatus({ state: "done", count: result.count, needsReview: result.needsReview });
+    } else {
+      setEmailStatus({ state: "error", error: result.error });
+    }
+  };
+
+  const emailConnected = emailStatus.state === "done";
 
   return (
     <div className="min-h-screen pb-10">
@@ -21,50 +36,39 @@ export function ConnectScreen() {
           We&apos;ll find your income and spending automatically. You&apos;re always in control.
         </p>
 
-        {/* Email — not wired to a live inbox sync in this build. See BUILD-SPEC:
-           we do not fake integrations, so this is honestly labeled rather than
-           pretending a nonexistent connection succeeded. */}
-        <div className="rounded-2xl border border-border-subtle bg-surface p-4 opacity-70">
+        {/* A real sync against the local ingest bridge (ingest/scripts/serve.ts,
+           see vite.config.ts's /email-server proxy) -- runs the actual IMAP +
+           heuristics + Gemini pipeline against a real inbox. */}
+        <button
+          type="button"
+          onClick={handleEmailSync}
+          disabled={emailStatus.state === "syncing"}
+          className="w-full rounded-2xl border border-border-subtle bg-surface p-4 text-left"
+        >
           <div className="mb-3 flex items-center gap-2">
-            <Mail size={18} className="text-text-tertiary" />
+            <Mail size={18} className="text-accent" />
             <span className="font-semibold">Email</span>
             <span className="text-sm text-text-tertiary">(Recommended)</span>
           </div>
           <div className="flex items-center justify-between rounded-[14px] border border-border-subtle bg-surface-subtle px-4 py-3">
-            <span className="text-sm text-text-tertiary">Not connected in this build</span>
+            {emailStatus.state === "idle" && <span className="text-sm text-text-secondary">Tap to sync your inbox</span>}
+            {emailStatus.state === "syncing" && (
+              <span className="flex items-center gap-2 text-sm text-text-secondary">
+                <Loader2 size={14} className="animate-spin" /> Syncing your inbox…
+              </span>
+            )}
+            {emailStatus.state === "done" && (
+              <span className="flex items-center gap-2 text-sm text-success">
+                <Check size={14} /> {emailStatus.count} transactions synced
+              </span>
+            )}
+            {emailStatus.state === "error" && <span className="text-sm text-error">{emailStatus.error}</span>}
           </div>
-        </div>
+        </button>
 
         <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-text-tertiary">Other options</p>
 
-        <button
-          type="button"
-          className="flex w-full items-center justify-between border-b border-border-subtle py-4 text-left"
-        >
-          <span className="flex items-center gap-3">
-            <PenLine size={18} className="text-accent" />
-            <span className="font-semibold">Add manually</span>
-          </span>
-          <ArrowRight size={16} className="text-text-tertiary" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setDemoLoaded(true)}
-          className="flex w-full items-center justify-between border-b border-border-subtle py-4 text-left"
-        >
-          <span className="flex items-center gap-3">
-            <Sparkles size={18} className="text-accent" />
-            <span className="font-semibold">Use demo data</span>
-          </span>
-          {demoLoaded ? (
-            <Check size={16} className="text-success" />
-          ) : (
-            <ArrowRight size={16} className="text-text-tertiary" />
-          )}
-        </button>
-
-        <div className="mt-4 flex items-center justify-between rounded-2xl border border-border-subtle bg-surface-subtle px-4 py-4 opacity-60">
+        <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-surface-subtle px-4 py-4 opacity-60">
           <span className="flex items-center gap-3">
             <Lock size={16} className="text-text-tertiary" />
             <span className="text-sm text-text-tertiary">Coming soon: Bank connection</span>
@@ -72,9 +76,10 @@ export function ConnectScreen() {
           <ArrowRight size={16} className="text-text-tertiary" />
         </div>
 
-        {demoLoaded && (
+        {emailConnected && (
           <div className="mt-6 rounded-2xl border border-success/40 bg-success-surface p-4 text-sm text-text-primary">
-            32 seeded transactions loaded — 1 needs your review.
+            {emailStatus.count} real transactions synced from your inbox
+            {emailStatus.needsReview > 0 ? ` — ${emailStatus.needsReview} need your review.` : "."}
           </div>
         )}
 
@@ -82,7 +87,7 @@ export function ConnectScreen() {
           <button
             type="button"
             onClick={finish}
-            disabled={!demoLoaded}
+            disabled={!emailConnected}
             className="w-full rounded-[14px] bg-accent px-6 py-4 text-center text-base font-bold text-text-on-accent disabled:opacity-40"
           >
             Continue to City

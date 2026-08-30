@@ -15,13 +15,45 @@
 /* Safe-area-aware top padding for the app shell, so the notch/status bar on
    phones like iPhone 13 doesn't cover the header on every screen. Applied
    once at the shell root (App.tsx) on top of each screen's own padding,
-   rather than duplicated per-screen. The extra 32px on top of the safe-area
-   inset itself is deliberate: when filming, whatever the phone is mounted
-   in/against can crop more of the top edge than just the notch, so titles
-   and header icons need clearance well past the safe area, not flush
-   against it. */
+   rather than duplicated per-screen. The extra 12px on top of the safe-area
+   inset itself is deliberate clearance for a filming mount that can crop
+   slightly past the notch -- kept small on purpose after 32px measured as
+   too much gap between the camera cutout and each screen's own heading on
+   a real device. */
 .pt-safe {
-  padding-top: calc(env(safe-area-inset-top) + 32px);
+  padding-top: calc(env(safe-area-inset-top) + 12px);
+}
+
+/* Every screen's root div sets its own `min-h-screen` (100vh) so short
+   screens (e.g. "All caught up!", centered empty states) still fill the
+   viewport. But every screen renders inside the shell's `.pt-safe` wrapper
+   above, which ALSO reserves its own top padding -- stacking a second,
+   independent 100vh under that padding makes the total taller than the
+   actual viewport by exactly the padding amount, on every single screen,
+   regardless of how much content it has. This redefines `min-h-screen`
+   app-wide to mean "the viewport height minus the shell's own top padding"
+   instead of a second full viewport, which is what removes the resulting
+   permanent sliver of scroll. Unlayered, so it wins over Tailwind's own
+   (layered) utility without needing !important. */
+.min-h-screen {
+  min-height: calc(100dvh - env(safe-area-inset-top) - 12px);
+}
+
+/* This is a chrome-less, fully custom mobile UI -- the browser's own gray
+   scrollbar indicator has no place in it. Hides the visual thumb/track only;
+   the page still scrolls normally, on every scrollable element, not just
+   the ones already using .no-scrollbar for a specific horizontal strip. */
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
+}
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
 }
 
 /* Two of these get overlaid (SplitSlider.tsx) to make a two-handle range

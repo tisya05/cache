@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Flame, Hammer } from "lucide-react";
+import { Flame, Hammer, Lock } from "lucide-react";
 import { BuildableCity } from "@/components/BuildableCity";
 import { BuildShopSheet } from "@/components/BuildShopSheet";
 import { ProgressRing } from "@/components/ProgressRing";
@@ -7,7 +7,7 @@ import { PrimaryButton } from "@/components/PrimaryButton";
 import { useAppState } from "@/state/AppStateContext";
 import { loadGoals, loadProofReceipts } from "@/lib/app-storage";
 import { computeGoalProgress } from "@/lib/month-progress";
-import { formatMonthLabel } from "@/lib/format";
+import { formatMonthLabel, formatDollarsFromCents } from "@/lib/format";
 import {
   BUILDING_CATALOG,
   loadPlacedBuildings,
@@ -176,18 +176,46 @@ export function CityScreen() {
           <Hammer size={18} /> Build
         </button>
 
-        <p className="mb-2 text-sm font-semibold text-text-secondary">{formatMonthLabel()} progress</p>
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-sm font-semibold text-text-secondary">{formatMonthLabel()} progress toward your savings goal</p>
+          <span className="flex items-center gap-1 rounded-full bg-surface-elevated px-2.5 py-1 text-xs font-semibold text-text-secondary">
+            <Lock size={10} /> Private
+          </span>
+        </div>
         <div className="rounded-2xl border border-border bg-surface p-4">
           <div className="flex items-center gap-4">
-            <div className="relative flex h-16 w-16 items-center justify-center">
-              <ProgressRing percent={progress.percent} size={64} />
+            <div className="relative flex h-16 w-16 shrink-0 items-center justify-center">
+              <ProgressRing
+                percent={progress.percent}
+                size={64}
+                color={progress.onTrack ? "var(--color-success)" : "var(--color-accent)"}
+              />
               <span className="absolute text-sm font-extrabold">{progress.percent}%</span>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-text-primary">On track</p>
-              <p className="text-xs text-text-tertiary">Tracking at this pace</p>
+              <p className={`text-sm font-semibold ${progress.onTrack ? "text-success" : "text-text-primary"}`}>
+                {progress.onTrack ? "On track" : "Below pace"}
+              </p>
+              <p className="text-xs text-text-tertiary">{progress.goalLabel}</p>
             </div>
             <p className="text-sm font-semibold text-text-secondary">{progress.daysLeft} days left</p>
+          </div>
+
+          <div className="mt-4 space-y-2 border-t border-border-subtle pt-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-text-tertiary">Income so far</span>
+              <span className="font-semibold">{formatDollarsFromCents(progress.incomeCents)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-tertiary">Spent so far</span>
+              <span className="font-semibold">{formatDollarsFromCents(progress.spendCents)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-tertiary">Saved so far</span>
+              <span className="font-semibold">
+                {formatDollarsFromCents(progress.savedCents)} · {progress.savedPercent}%
+              </span>
+            </div>
           </div>
         </div>
 

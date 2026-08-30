@@ -24,8 +24,14 @@ export interface TransactionEvent {
   amountCents: number;
   /** the counterparty/sender business identity, e.g. "Venmo", "Starbucks", "DoorDash" */
   merchant: string;
-  /** raw memo/description text, e.g. "Steph 🍕🍺 rent split lol" */
+  /** raw memo/description text, e.g. "Steph 🍕🍺 rent split lol" -- a genuine
+   *  human-written message. Empty when none exists; never a stand-in for a
+   *  counterparty name (see `counterparty`). */
   memo: string;
+  /** The other party's name for a P2P payment (Venmo/Zelle), e.g. "Sean
+   *  Braggs" -- distinct from `memo` since a bare name is not a message.
+   *  Absent for merchant/card transactions, which have no "other party". */
+  counterparty?: string;
   /** e.g. "rent", "food", "subscriptions", "paycheck" — must exist in CATEGORY_TAXONOMY */
   category: string;
   categoryGroup: CategoryGroup;
